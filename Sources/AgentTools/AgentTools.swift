@@ -390,14 +390,15 @@ public enum AgentTools {
             ],
             required: ["action"]
         ),
-        // --- Coding Mode ---
+        // --- Mode switching ---
         ToolDef(
             name: Name.codingMode,
-            description: "Toggle coding mode on/off. When ON, only Core+Workflow+Coding+UserAgent tools are sent to the LLM — removes conversation, accessibility, automation, web, daemon tools for faster responses. Auto-enables after iteration 1 for coding tasks.",
+            description: "Switch tool mode. coding=Core+Workflow+Coding+UserAgent. automation=Core+Workflow+Automation+UserAgent. standard=all user-enabled tools.",
             properties: [
-                "enabled": ["type": "boolean", "description": "true to enable coding mode, false to disable and restore all tools"],
+                "action": ["type": "string", "description": "Action: coding, automation, or standard"],
+                "enabled": ["type": "boolean", "description": "Legacy: true=coding, false=standard"],
             ],
-            required: ["enabled"]
+            required: []
         ),
         // --- Agent Scripts (reusable Swift scripts) ---
         // --- Agent Scripts (consolidated) ---
