@@ -159,6 +159,8 @@ public enum AgentTools {
 
         RULES:
         - Prefer built-in tools over MCP (mcp_*). Use file_manager for files, git for VCS, xcode for builds.
+        - PREFER ax_ accessibility tools over screenshots for reading UI. ax_find_element, ax_inspect_element, ax_get_children read text, roles, values instantly. Only use screenshots when visual layout matters.
+        - For browser web content: ax_find_element with AXWebArea, AXLink, AXButton, AXTextField, AXImage, AXHeading roles. ax_click_element and ax_type_into_element work on web elements too.
         - NEVER guess file paths. ALWAYS call file_manager(action:"list") BEFORE reading files to verify they exist. Guessing paths wastes tokens on errors.
         - ALWAYS use file_manager(action:"list") and file_manager(action:"search") instead of shell find/grep commands. These tools format output as a directory tree and save tokens.
         - xcode(action:"build") for Xcode projects, never xcodebuild shell.
