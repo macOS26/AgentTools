@@ -489,7 +489,7 @@ public enum AgentTools {
             name: Name.safari,
             description: "Safari web automation: open/click/type/read_content/execute_js/google_search/navigate/tabs.",
             properties: [
-                "action": ["type": "string", "description": "Action to perform"],
+                "action": ["type": "string", "description": "Action: open, click, type, read_content, execute_js, google_search, navigate, tabs, scan, submit"],
                 "url": ["type": "string", "description": "URL to open"],
                 "selector": ["type": "string", "description": "CSS selector for click/type/submit"],
                 "text": ["type": "string", "description": "Text to type"],
