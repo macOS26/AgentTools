@@ -19,6 +19,7 @@ public enum AgentTools {
         public static let gitDiffPatch = "git_diff_patch"
         public static let gitBranch = "git_branch"
         // Core Scripting
+        public static let appleEventQuery = "apple_event_query"
         public static let runApplescript = "run_applescript"
         public static let runOsascript = "run_osascript"
         public static let executeJavascript = "execute_javascript"
@@ -158,8 +159,6 @@ public enum AgentTools {
 
         RULES:
         - Prefer built-in tools over MCP (mcp_*). Use file_manager for files, git for VCS, xcode for builds.
-        - PREFER ax_ accessibility tools over screenshots for reading UI. ax_find_element, ax_inspect_element, ax_get_children read text, roles, values instantly. Only use screenshots when visual layout matters.
-        - For browser web content: ax_find_element with AXWebArea, AXLink, AXButton, AXTextField, AXImage, AXHeading roles. ax_click_element and ax_type_into_element work on web elements too.
         - NEVER guess file paths. ALWAYS call file_manager(action:"list") BEFORE reading files to verify they exist. Guessing paths wastes tokens on errors.
         - ALWAYS use file_manager(action:"list") and file_manager(action:"search") instead of shell find/grep commands. These tools format output as a directory tree and save tokens.
         - xcode(action:"build") for Xcode projects, never xcodebuild shell.
@@ -228,10 +227,11 @@ public enum AgentTools {
         Name.fileManager:          #"file_manager {"action": "read", "file_path": "/Users/toddbruss/Documents/example.txt"}"#,
         Name.taskComplete:         #"task_complete {"summary": "Done"}"#,
         Name.git:                  #"git {"action": "status", "path": "/Users/toddbruss/Documents/GitHub/MyRepo"}"#,
+        Name.appleEventQuery:      #"apple_event_query {"bundle_id": "com.apple.Music", "action": "get", "key": "currentTrack"}"#,
         Name.agentScript:          #"agent {"action": "run", "name": "MyScript"}"#,
         Name.lookupSdef:           #"lookup_sdef {"bundle_id": "com.apple.Music"}"#,
         Name.xcode:                #"xcode {"action": "build"}"#,
-        Name.accessibility:        #"accessibility {"action": "list_windows"}"#,
+        Name.accessibility:        #"accessibility {"action": "click", "role": "AXButton", "title": "take photo", "appBundleId": "com.apple.PhotoBooth"}"#,
         Name.safari:               #"web {"action": "open", "url": "https://example.com"}"#,
         Name.appleScriptTool:      #"applescript_tool {"action": "execute", "source": "display dialog \"Hello\""}"#,
         Name.javascriptTool:       #"javascript_tool {"action": "execute", "source": "var app = Application.currentApplication(); app.displayDialog('Hello')"}"#,
@@ -417,6 +417,7 @@ public enum AgentTools {
         // --- Inline AppleScript/JXA execution now via applescript_tool/javascript_tool execute action ---
         // --- Automation: Apple Events ---
         ToolDef(
+            name: Name.appleEventQuery,
             description: "Query a scriptable Mac app via ObjC dispatch. Flat keys, one operation per call. Use lookup_sdef first.",
             properties: [
                 "bundle_id": ["type": "string", "description": "App bundle identifier (e.g. com.apple.Music)"],
@@ -455,31 +456,40 @@ public enum AgentTools {
             ],
             required: ["action"]
         ),
-        // --- Accessibility (consolidated) ---
+        // --- Accessibility (consolidated, powered by AXorcist) ---
         ToolDef(
             name: Name.accessibility,
-            description: "macOS Accessibility API for UI automation. Controls any app — click buttons, type text, read elements, manage windows, navigate menus, capture screenshots. For web pages in browsers, use ax_find_element with AXWebArea roles. Use consistent role/title/value selectors across calls.",
+            description: "macOS UI automation via AXorcist. Finds elements by role/title/description. Actions: list_windows, get_properties, click (finds+presses element), perform_action (AXPress/AXConfirm etc), type_text, type_into_element, find_element, get_children, manage_app (launch/activate/quit/list), click_menu_item, scroll, press_key, screenshot, set_properties, wait_for_element, get_focused_element, read_focused, highlight_element, show_menu, drag, set_window_frame, get_window_frame, scroll_to_element.",
             properties: [
-                "action": ["type": "string", "description": "Action: list_windows, inspect_element, get_properties, perform_action, type_text, click, scroll, press_key, screenshot, set_properties, find_element, get_focused_element, get_children, drag"],
-                "role": ["type": "string", "description": "AX role (e.g. AXButton, AXTextField)"],
-                "title": ["type": "string", "description": "Title/name to match (partial)"],
+                "action": ["type": "string", "description": "Action to perform. Common: click (find+press by role/title), perform_action (custom AX action), list_windows, get_properties, find_element, get_children, type_text, type_into_element, manage_app, click_menu_item, screenshot, scroll, press_key, set_properties, wait_for_element, get_focused_element, read_focused, highlight_element, show_menu, drag, set_window_frame, get_window_frame, scroll_to_element"],
+                "role": ["type": "string", "description": "AX role filter (e.g. AXButton, AXTextField, AXWindow)"],
+                "title": ["type": "string", "description": "Element name to match — searches AXTitle, AXDescription, AXHelp (partial match)"],
                 "value": ["type": "string", "description": "Value to match (partial)"],
-                "appBundleId": ["type": "string", "description": "App bundle ID to search within"],
+                "appBundleId": ["type": "string", "description": "App bundle ID (e.g. com.apple.PhotoBooth). Required to target a specific app"],
                 "x": ["type": "number", "description": "Screen X coordinate"],
                 "y": ["type": "number", "description": "Screen Y coordinate"],
-                "text": ["type": "string", "description": "For type_text: text to type"],
+                "text": ["type": "string", "description": "For type_text/type_into_element: text to type"],
                 "button": ["type": "string", "description": "For click: left/right/middle (default left)"],
                 "clicks": ["type": "integer", "description": "For click: 1 or 2 (default 1)"],
                 "keyCode": ["type": "integer", "description": "For press_key: macOS virtual key code"],
                 "modifiers": ["type": "array", "description": "For press_key: command/option/control/shift", "items": ["type": "string"]],
-                "width": ["type": "number", "description": "For screenshot: region width"],
-                "height": ["type": "number", "description": "For screenshot: region height"],
-                "windowId": ["type": "integer", "description": "For screenshot/list_windows: window ID"],
+                "width": ["type": "number", "description": "For screenshot/set_window_frame: width"],
+                "height": ["type": "number", "description": "For screenshot/set_window_frame: height"],
+                "windowId": ["type": "integer", "description": "For screenshot: window ID"],
                 "limit": ["type": "integer", "description": "For list_windows: max windows (default 50)"],
-                "ax_action": ["type": "string", "description": "For perform_action: AXPress, AXConfirm, AXActivate, AXCancel, AXShowMenu, AXDismiss, AXIncrement, AXDecrement, AXExpand, AXCollapse, AXOpen, AXRaise, AXZoom, AXMinimize, AXCopy, AXCut, AXPaste, AXSelect, AXSelectAll, AXScrollToVisible, AXScrollPageUp/Down/Left/Right, AXFocus, AXShowDefaultUI, AXShowAlternateUI, AXDelete, AXPick"],
+                "ax_action": ["type": "string", "description": "For perform_action: AXPress, AXConfirm, AXCancel, AXShowMenu, AXRaise, AXIncrement, AXDecrement"],
                 "properties": ["type": "object", "description": "For set_properties: key-value pairs to set"],
-                "timeout": ["type": "number", "description": "For find_element: max seconds to wait (default 5)"],
+                "timeout": ["type": "number", "description": "For find_element/click/wait_for_element: max seconds (default 5)"],
                 "depth": ["type": "integer", "description": "For get_children: traversal depth (default 3)"],
+                "menuPath": ["type": "string", "description": "For click_menu_item: menu path separated by ' > ' (e.g. 'File > Save')"],
+                "name": ["type": "string", "description": "For manage_app: app name (e.g. 'Photo Booth')"],
+                "bundleId": ["type": "string", "description": "For manage_app: bundle ID to launch/activate/quit"],
+                "deltaX": ["type": "number", "description": "For scroll: horizontal scroll amount"],
+                "deltaY": ["type": "number", "description": "For scroll: vertical scroll amount (negative=down)"],
+                "fromX": ["type": "number", "description": "For drag: start X"],
+                "fromY": ["type": "number", "description": "For drag: start Y"],
+                "toX": ["type": "number", "description": "For drag: end X"],
+                "toY": ["type": "number", "description": "For drag: end Y"],
             ],
             required: ["action"]
         ),
