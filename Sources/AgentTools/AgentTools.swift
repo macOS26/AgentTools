@@ -459,9 +459,9 @@ public enum AgentTools {
         // --- Accessibility (consolidated) ---
         ToolDef(
             name: Name.accessibility,
-            description: "macOS Accessibility API for UI automation. Use consistent role/title/value selectors across calls.",
+            description: "macOS Accessibility API for UI automation. Controls any app — click buttons, type text, read elements, manage windows, navigate menus, capture screenshots. For web pages in browsers, use ax_find_element with AXWebArea roles. Use consistent role/title/value selectors across calls.",
             properties: [
-                "action": ["type": "string", "description": "Action: list_windows, get_properties, perform_action, type_text, click, press_key, screenshot, set_properties, find_element, get_children"],
+                "action": ["type": "string", "description": "Action: list_windows, inspect_element, get_properties, perform_action, type_text, click, scroll, press_key, screenshot, set_properties, find_element, get_focused_element, get_children, drag"],
                 "role": ["type": "string", "description": "AX role (e.g. AXButton, AXTextField)"],
                 "title": ["type": "string", "description": "Title/name to match (partial)"],
                 "value": ["type": "string", "description": "Value to match (partial)"],
@@ -477,7 +477,7 @@ public enum AgentTools {
                 "height": ["type": "number", "description": "For screenshot: region height"],
                 "windowId": ["type": "integer", "description": "For screenshot/list_windows: window ID"],
                 "limit": ["type": "integer", "description": "For list_windows: max windows (default 50)"],
-                "ax_action": ["type": "string", "description": "For perform_action: AX action (e.g. AXPress, AXConfirm)"],
+                "ax_action": ["type": "string", "description": "For perform_action: AXPress, AXConfirm, AXActivate, AXCancel, AXShowMenu, AXDismiss, AXIncrement, AXDecrement, AXExpand, AXCollapse, AXOpen, AXRaise, AXZoom, AXMinimize, AXCopy, AXCut, AXPaste, AXSelect, AXSelectAll, AXScrollToVisible, AXScrollPageUp/Down/Left/Right, AXFocus, AXShowDefaultUI, AXShowAlternateUI, AXDelete, AXPick"],
                 "properties": ["type": "object", "description": "For set_properties: key-value pairs to set"],
                 "timeout": ["type": "number", "description": "For find_element: max seconds to wait (default 5)"],
                 "depth": ["type": "integer", "description": "For get_children: traversal depth (default 3)"],
