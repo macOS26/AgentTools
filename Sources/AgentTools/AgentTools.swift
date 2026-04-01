@@ -19,7 +19,6 @@ public enum AgentTools {
         public static let gitDiffPatch = "git_diff_patch"
         public static let gitBranch = "git_branch"
         // Core Scripting
-        public static let appleEventQuery = "apple_event_query"
         public static let runApplescript = "run_applescript"
         public static let runOsascript = "run_osascript"
         public static let executeJavascript = "execute_javascript"
@@ -229,7 +228,6 @@ public enum AgentTools {
         Name.fileManager:          #"file_manager {"action": "read", "file_path": "/Users/toddbruss/Documents/example.txt"}"#,
         Name.taskComplete:         #"task_complete {"summary": "Done"}"#,
         Name.git:                  #"git {"action": "status", "path": "/Users/toddbruss/Documents/GitHub/MyRepo"}"#,
-        Name.appleEventQuery:      #"apple_event_query {"bundle_id": "com.apple.Music", "action": "get", "key": "currentTrack"}"#,
         Name.agentScript:          #"agent {"action": "run", "name": "MyScript"}"#,
         Name.lookupSdef:           #"lookup_sdef {"bundle_id": "com.apple.Music"}"#,
         Name.xcode:                #"xcode {"action": "build"}"#,
@@ -419,7 +417,6 @@ public enum AgentTools {
         // --- Inline AppleScript/JXA execution now via applescript_tool/javascript_tool execute action ---
         // --- Automation: Apple Events ---
         ToolDef(
-            name: Name.appleEventQuery,
             description: "Query a scriptable Mac app via ObjC dispatch. Flat keys, one operation per call. Use lookup_sdef first.",
             properties: [
                 "bundle_id": ["type": "string", "description": "App bundle identifier (e.g. com.apple.Music)"],
