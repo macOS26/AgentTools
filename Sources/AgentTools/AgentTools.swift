@@ -473,6 +473,28 @@ public enum AgentTools {
             ],
             required: ["action"]
         ),
+        // --- Clipboard ---
+        ToolDef(
+            name: "clipboard",
+            description: "Clipboard operations: read, write, paste (Cmd+V), copy_image (file to clipboard).",
+            properties: [
+                "action": ["type": "string", "description": "Action: read, write, paste, or copy_image"],
+                "text": ["type": "string", "description": "For write: text to copy"],
+                "file_path": ["type": "string", "description": "For copy_image: path to image file"],
+            ],
+            required: ["action"]
+        ),
+        // --- Symbol Search ---
+        ToolDef(
+            name: "symbol_search",
+            description: "Find Swift symbol definitions (func/class/struct/enum/protocol/var) by name using SwiftSyntax AST.",
+            properties: [
+                "query": ["type": "string", "description": "Symbol name to search for (partial match)"],
+                "path": ["type": "string", "description": "Directory to search (defaults to project folder)"],
+                "exact": ["type": "boolean", "description": "Exact name match (default false)"],
+            ],
+            required: ["query"]
+        ),
         // --- Tool Discovery ---
         ToolDef(
             name: Name.listNativeTools,
