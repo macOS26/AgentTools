@@ -169,6 +169,9 @@ public enum AgentTools {
         execute_agent_command (user shell) | execute_daemon_command (root — no sudo needed) | batch_commands | batch_tools
 
         PREFER: file_manager over shell find/grep. xcode(action:"build") over xcodebuild shell. Built-in tools over MCP. Safari JS via AppleScript for web.
+        CODING: After code changes, build to verify. Fix errors before moving on. Use xcode(action:"analyze") to catch issues.
+        WEB: For Safari, use web tool. For cross-browser, use Playwright MCP if available. Always check page loaded before interacting.
+        AUTOMATION: Use accessibility(action:"click") with appBundleId — it auto-launches, activates, and unminimizes. Don't list_windows first.
         ROOT: execute_daemon_command for system logs, /System, /Library, launchd, firewall. NEVER use sudo.
         """
     }
