@@ -141,7 +141,7 @@ public enum AgentTools {
         public static let sendMessage = "send_message"
         public static let planMode = "plan_mode"
         public static let projectFolderTool = "project_folder"
-        public static let codingMode = "coding_mode"
+        public static let codingMode = "mode"
     }
 
     // MARK: - Full LLM System Prompt (Desktop: Claude, Ollama, OpenAI, etc.)
@@ -153,7 +153,7 @@ public enum AgentTools {
         ALWAYS call task_complete when finished. Put questions in the summary. Don't ask — act.
         Show full output when listing. Never output code as text — use file_manager or agent tools.
 
-        TOOLS: file_manager (read/write/edit/list/search/diff_apply/extract_function) | git (status/diff/log/commit/branch) | xcode (build/run/analyze/snippet/add_file/remove_file) | agent (list/read/create/update/run/delete/combine) | plan_mode (create/update/read/list/delete) | project_folder (get/set/home/documents/library/none) | coding_mode (enabled:true/false)
+        TOOLS: file_manager (read/write/edit/list/search/diff_apply/extract_function) | git (status/diff/log/commit/branch) | xcode (build/run/analyze/snippet/add_file/remove_file) | agent (list/read/create/update/run/delete/combine) | plan_mode (create/update/read/list/delete) | project_folder (get/set/home/documents/library/none) | mode (coding/automation/standard)
         applescript_tool (execute/lookup_sdef/list/run/save/delete) | javascript_tool (execute/list/run/save/delete) | accessibility (open_app/click/perform_action/type_text/find_element + more) | web (open/click/type/read_content/execute_js/google_search + more)
         ACCESSIBILITY: Use open_app to launch an app and see its elements, then click the one you want. Example: accessibility(action:"open_app", appBundleId:"Photo Booth") → shows all buttons/controls → then accessibility(action:"click", title:"take photo", appBundleId:"Photo Booth"). appBundleId accepts app names ("Photo Booth", "Safari"). Do NOT use list_windows — use open_app instead.
         execute_agent_command (shell) | execute_daemon_command (root shell) | batch_commands (multi-shell) | batch_tools (multi-tool) | run_shell_script (shell with fallback)
@@ -393,12 +393,11 @@ public enum AgentTools {
         // --- Mode switching ---
         ToolDef(
             name: Name.codingMode,
-            description: "Switch tool mode. coding=Core+Workflow+Coding+UserAgent. automation=Core+Workflow+Automation+UserAgent. standard=all user-enabled tools.",
+            description: "Switch tool mode. coding: Core+Workflow+Coding+UserAgent tools. automation: Core+Workflow+Automation+UserAgent tools. standard: all user-enabled tools.",
             properties: [
                 "action": ["type": "string", "description": "Action: coding, automation, or standard"],
-                "enabled": ["type": "boolean", "description": "Legacy: true=coding, false=standard"],
             ],
-            required: []
+            required: ["action"]
         ),
         // --- Agent Scripts (reusable Swift scripts) ---
         // --- Agent Scripts (consolidated) ---
