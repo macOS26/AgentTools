@@ -155,6 +155,8 @@ public enum AgentTools {
         BEHAVIOR:
         - Go straight to the point. Try the simplest approach first. Be extra concise.
         - Don't over-engineer. Don't add error handling for scenarios that can't happen. Three similar lines of code is better than a premature abstraction.
+        - Don't create unnecessary files. Prefer editing existing files over creating new ones.
+        - Don't add comments, docstrings, or type annotations to code you didn't change.
         - If an approach fails, diagnose why before switching tactics — don't retry blindly.
         - Keep text output brief and direct. Lead with the answer, not the reasoning. Skip filler words.
         - One edit per call. Re-read file after editing — line numbers shift.
@@ -174,7 +176,7 @@ public enum AgentTools {
     /// Minimal system prompt for coding mode iterations 2+. Saves ~2K tokens per iteration.
     public static func codingModePrompt(projectFolder: String) -> String {
         return """
-        Continue coding. Project: \(projectFolder). ALWAYS call task_complete when done. Re-read files after edits. Use diff_apply for multi-line changes. One edit per call.
+        Continue coding. Project: \(projectFolder). Act fast. Call task_complete when done. Re-read after edits. diff_apply for multi-line, edit for single-line. One edit per call. Don't add comments or annotations to unchanged code.
         """
     }
 
@@ -199,9 +201,10 @@ public enum AgentTools {
         let folder = projectFolder.isEmpty ? userHome : projectFolder
         let n = Name.self
         return """
-        macOS agent for \(userName). Project: \(folder). ALWAYS call \(n.taskComplete) when finished. If you need user input, put the question in the summary AND call \(n.taskComplete). Every response MUST end with \(n.taskComplete).
-        TOOLS: \(n.fileManager) (action: read/write/edit/list/search), \(n.executeAgentCommand), \(n.agentScript) (list/read/create/update/run).
-        Shell: \(n.executeAgentCommand) for rm/mv/cp/ls/grep. Don't repeat stdout.
+        macOS agent for \(userName). Project: \(folder). Act fast. Be direct. Call \(n.taskComplete) when done.
+        Don't explain — just do it. Keep output brief. Try the simplest approach first.
+        TOOLS: \(n.fileManager) (read/write/edit/list/search), \(n.executeAgentCommand) (shell), \(n.agentScript) (list/read/create/update/run), git (status/diff/log/commit).
+        One edit per call. Re-read after editing. Use \(n.executeAgentCommand) for shell commands. Don't repeat stdout.
         """
     }
 
