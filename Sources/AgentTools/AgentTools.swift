@@ -419,6 +419,7 @@ public enum AgentTools {
         // --- Inline AppleScript/JXA execution now via applescript_tool/javascript_tool execute action ---
         // --- Automation: Apple Events ---
         ToolDef(
+            name: Name.appleEventQuery,
             description: "Query a scriptable Mac app via ObjC dispatch. Flat keys, one operation per call. Use lookup_sdef first.",
             properties: [
                 "bundle_id": ["type": "string", "description": "App bundle identifier (e.g. com.apple.Music)"],
