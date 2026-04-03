@@ -6,6 +6,7 @@ public enum APIProvider: String, CaseIterable, Codable, Sendable {
     case gemini = "gemini"
     case grok = "grok"
     case mistral = "mistral"
+    case codestral = "codestral"
     case deepSeek = "deepSeek"
     case huggingFace = "huggingFace"
     case zAI = "zAI"
@@ -22,6 +23,7 @@ public enum APIProvider: String, CaseIterable, Codable, Sendable {
         case .gemini: "Google Gemini"
         case .grok: "Grok"
         case .mistral: "Mistral"
+        case .codestral: "Codestral"
         case .deepSeek: "DeepSeek"
         case .huggingFace: "Hugging Face"
         case .ollama: "Ollama"
@@ -34,6 +36,6 @@ public enum APIProvider: String, CaseIterable, Codable, Sendable {
     }
 
     public static var selectableProviders: [APIProvider] {
-        [.claude, .openAI, .gemini, .grok, .mistral, .deepSeek, .huggingFace, .zAI, .ollama, .localOllama, .vLLM, .lmStudio]
+        [.claude, .openAI, .gemini, .grok, .mistral, .codestral, .deepSeek, .huggingFace, .zAI, .ollama, .localOllama, .vLLM, .lmStudio]
     }
 }
