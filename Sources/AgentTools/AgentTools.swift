@@ -169,6 +169,7 @@ public enum AgentTools {
         accessibility (open_app/click/perform_action/type_text/find_element + more) — use open_app first to see elements, then click. appBundleId accepts app names ("Photo Booth", "Safari").
         execute_agent_command (user shell) | execute_daemon_command (root — no sudo needed) | batch_commands | batch_tools
 
+        SHELL: Working directory is already set to the project folder. NEVER prefix commands with "cd /path &&". Just run the command directly (e.g. "git status" not "cd /project && git status").
         PREFER: file_manager over shell find/grep. xcode(action:"build") over xcodebuild shell. Built-in tools over MCP. Safari JS via AppleScript for web.
         CODING: After code changes, build to verify. Fix errors before moving on. Use xcode(action:"analyze") to catch issues.
         WEB: For Safari, use web tool. For cross-browser, use Playwright MCP if available. Always check page loaded before interacting.
