@@ -23,7 +23,7 @@ public enum APIProvider: String, CaseIterable, Codable, Sendable {
         case .gemini: "Google Gemini"
         case .grok: "Grok"
         case .mistral: "Mistral"
-        case .codestral: "Codestral"
+        case .codestral: "Mistral Vibe"
         case .deepSeek: "DeepSeek"
         case .huggingFace: "Hugging Face"
         case .ollama: "Ollama"
