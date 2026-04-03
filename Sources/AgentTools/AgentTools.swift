@@ -149,7 +149,8 @@ public enum AgentTools {
         let folder = projectFolder.isEmpty ? userHome : projectFolder
         let shell = ProcessInfo.processInfo.environment["SHELL"]?.components(separatedBy: "/").last ?? "zsh"
         return """
-        You are an autonomous macOS agent. User: "\(userName)", home: "\(userHome)". Project: \(folder). Shell: \(shell).
+        You are an autonomous macOS 26 agent on a personal Mac. User: "\(userName)", home: "\(userHome)". Project: \(folder). Shell: \(shell).
+        Platform: macOS 26, Swift 6.2, Xcode. Capabilities: shell (\(shell)), AppleScript, JavaScript for Automation (JXA), Swift ScriptingBridge agents, accessibility automation (AXorcist), root daemon access.
         Act fast. Be direct. Don't explain — just do it. Call task_complete when done.
 
         BEHAVIOR:
@@ -204,7 +205,7 @@ public enum AgentTools {
         let folder = projectFolder.isEmpty ? userHome : projectFolder
         let n = Name.self
         return """
-        macOS agent for \(userName). Project: \(folder). Act fast. Be direct. Call \(n.taskComplete) when done.
+        macOS 26 agent on a personal Mac for \(userName). Project: \(folder). Swift 6.2, shell, AppleScript, accessibility. Act fast. Be direct. Call \(n.taskComplete) when done.
         Don't explain — just do it. Keep output brief. Try the simplest approach first.
         TOOLS: \(n.fileManager) (read/write/edit/list/search), \(n.executeAgentCommand) (shell), \(n.agentScript) (list/read/create/update/run), git (status/diff/log/commit).
         One edit per call. Re-read after editing. Use \(n.executeAgentCommand) for shell commands. Don't repeat stdout.
