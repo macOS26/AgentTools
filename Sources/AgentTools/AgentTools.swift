@@ -416,24 +416,6 @@ public enum AgentTools {
             ],
             required: ["action"]
         ),
-        // --- Inline AppleScript/JXA execution now via applescript_tool/javascript_tool execute action ---
-        // --- Automation: Apple Events ---
-        ToolDef(
-            name: Name.appleEventQuery,
-            description: "Query a scriptable Mac app via ObjC dispatch. Flat keys, one operation per call. Use lookup_sdef first.",
-            properties: [
-                "bundle_id": ["type": "string", "description": "App bundle identifier (e.g. com.apple.Music)"],
-                "action": ["type": "string", "description": "One of: get, iterate, index, call, filter"],
-                "key": ["type": "string", "description": "Property key for 'get' action"],
-                "properties": ["type": "string", "description": "Comma-separated property names for 'iterate' (e.g. \"name,artist,album\")"],
-                "limit": ["type": "integer", "description": "Max items for 'iterate' (default 50)"],
-                "index": ["type": "integer", "description": "Array index for 'index' action"],
-                "method": ["type": "string", "description": "Method name for 'call' action"],
-                "arg": ["type": "string", "description": "Argument for 'call' action"],
-                "predicate": ["type": "string", "description": "NSPredicate format string for 'filter' action"],
-            ],
-            required: ["bundle_id", "action"]
-        ),
         // --- AppleScript (consolidated) ---
         ToolDef(
             name: Name.appleScriptTool,
