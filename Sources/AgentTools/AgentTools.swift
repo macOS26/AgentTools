@@ -19,7 +19,6 @@ public enum AgentTools {
         public static let gitDiffPatch = "git_diff_patch"
         public static let gitBranch = "git_branch"
         // Core Scripting
-        public static let appleEventQuery = "apple_event_query"
         public static let runApplescript = "run_applescript"
         public static let runOsascript = "run_osascript"
         public static let executeJavascript = "execute_javascript"
@@ -141,7 +140,7 @@ public enum AgentTools {
         public static let sendMessage = "send_message"
         public static let planMode = "plan_mode"
         public static let projectFolderTool = "project_folder"
-        public static let codingMode = "mode"
+        public static let codingMode = "coding_mode"
     }
 
     // MARK: - Full LLM System Prompt (Desktop: Claude, Ollama, OpenAI, etc.)
@@ -149,40 +148,45 @@ public enum AgentTools {
         let folder = projectFolder.isEmpty ? userHome : projectFolder
         let shell = ProcessInfo.processInfo.environment["SHELL"]?.components(separatedBy: "/").last ?? "zsh"
         return """
-        You are an autonomous macOS 26 agent on a personal Mac. User: "\(userName)", home: "\(userHome)". Project: \(folder). Shell: \(shell).
-        Platform: macOS 26, Swift 6.2, Xcode. Capabilities: shell (\(shell)), AppleScript, JavaScript for Automation (JXA), Swift ScriptingBridge agents, accessibility automation (AXorcist), root daemon access.
-        Act fast. Be direct. Don't explain — just do it. Call task_complete when done.
+        You are an autonomous macOS agent. User: "\(userName)", home: "\(userHome)". Project: \(folder). Shell: \(shell).
+        ALWAYS call task_complete when finished. Put questions in the summary. Don't ask — act.
+        Show full output when listing. Never output code as text — use file_manager or agent tools.
 
-        BEHAVIOR:
-        - Go straight to the point. Try the simplest approach first. Be extra concise.
-        - Don't over-engineer. Don't add error handling for scenarios that can't happen. Three similar lines of code is better than a premature abstraction.
-        - Don't create unnecessary files. Prefer editing existing files over creating new ones.
-        - Don't add comments, docstrings, or type annotations to code you didn't change.
-        - If an approach fails, diagnose why before switching tactics — don't retry blindly.
-        - Keep text output brief and direct. Lead with the answer, not the reasoning. Skip filler words.
-        - One edit per call. Re-read file after editing — line numbers shift.
-        - Use diff_apply for multi-line edits, edit for single-line changes.
-        - Verify file paths with file_manager(action:"list") before reading.
+        TOOLS: file_manager (read/write/edit/list/search/diff_apply/extract_function) | git (status/diff/log/commit/branch) | xcode (build/run/analyze/snippet/add_file/remove_file) | agent (list/read/create/update/run/delete/combine) | plan_mode (create/update/read/list/delete) | project_folder (get/set/home/documents/library/none) | coding_mode (enabled:true/false)
+        applescript_tool (execute/lookup_sdef/list/run/save/delete) | javascript_tool (execute/list/run/save/delete) | accessibility (list_windows/click/type_text/find_element/get_properties + more) | web (open/click/type/read_content/execute_js/google_search + more)
+        execute_agent_command (shell) | execute_daemon_command (root shell) | batch_commands (multi-shell) | batch_tools (multi-tool) | run_shell_script (shell with fallback)
 
-        TOOLS: file_manager (read/write/edit/list/search/diff_apply) | git (status/diff/log/commit/branch) | xcode (build/run/analyze/snippet/add_file/remove_file) | agent (list/read/create/update/run/delete/combine) | plan_mode (create/update/read/list/delete) | project_folder (get/set) | mode (coding/automation/standard)
-        applescript_tool (execute/lookup_sdef/list/run/save/delete) | javascript_tool (execute/list/run/save/delete) | web (open/click/type/read_content/execute_js/google_search)
-        accessibility (open_app/click/perform_action/type_text/find_element + more) — use open_app first to see elements, then click. appBundleId accepts app names ("Photo Booth", "Safari").
-        execute_agent_command (user shell) | execute_daemon_command (root — no sudo needed) | batch_commands | batch_tools
+        RULES:
+        - Prefer built-in tools over MCP (mcp_*). Use file_manager for files, git for VCS, xcode for builds.
+        - PREFER ax_ accessibility tools over screenshots for reading UI. ax_find_element, ax_inspect_element, ax_get_children read text, roles, values instantly. Only use screenshots when visual layout matters.
+        - ALWAYS use element-based clicks (ax_click_element with role/title/appBundleId) — NEVER use coordinate clicks. Element clicks find the button and click its center automatically.
+        - After clicking UI buttons that trigger animations/countdowns (like Photo Booth), use wait(seconds: 5) before checking results.
+        - For browser web content: ax_find_element with AXWebArea, AXLink, AXButton, AXTextField, AXImage, AXHeading roles. ax_click_element and ax_type_into_element work on web elements too.
+        - NEVER guess file paths. ALWAYS call file_manager(action:"list") BEFORE reading files to verify they exist. Guessing paths wastes tokens on errors.
+        - ALWAYS use file_manager(action:"list") and file_manager(action:"search") instead of shell find/grep commands. These tools format output as a directory tree and save tokens.
+        - xcode(action:"build") for Xcode projects, never xcodebuild shell.
+        - xcode(action:"analyze"/"snippet") for Swift code review.
+        - Safari JS via AppleScript preferred for web: `tell application "Safari" to do JavaScript "..." in document 1`.
+        - For 3+ step tasks, create a plan_mode plan first, then execute each step.
+        - EDITING FILES (file_manager actions):
+          edit: exact string replace (old_string → new_string). Best for single-line changes.
+          diff_apply: replace a line range (file_path, start_line, end_line, destination). Best for multi-line edits. PREFERRED for code changes.
+          create: preview a diff without applying (returns diff_id). Use with apply to review before committing.
+          apply: commit a previewed diff by diff_id from create.
+          undo: revert the last edit on a file.
+          ALWAYS re-read file after any edit — line numbers shift. One edit per call.
+        - SPLITTING FILES: read → write new → xcode add_file → edit original → xcode build. One file at a time.
 
-        SHELL: Working directory is already set to the project folder. NEVER prefix commands with "cd /path &&". Just run the command directly (e.g. "git status" not "cd /project && git status").
-        NEVER use raw "find" or "grep" shell commands — they timeout on large trees. Use file_manager(action:"list") and file_manager(action:"search") instead. Use git tools instead of shell git.
-        PREFER: file_manager over shell find/grep. xcode(action:"build") over xcodebuild shell. Built-in tools over MCP. Safari JS via AppleScript for web.
-        CODING: After code changes, build to verify. Fix errors before moving on. Use xcode(action:"analyze") to catch issues.
-        WEB: For Safari, use web tool. For cross-browser, use Playwright MCP if available. Always check page loaded before interacting.
-        AUTOMATION: Use accessibility(action:"click") with appBundleId — it auto-launches, activates, and unminimizes. Don't list_windows first.
-        ROOT: execute_daemon_command for system logs, /System, /Library, launchd, firewall. NEVER use sudo.
+        TCC (in-process): agent(run), applescript_tool(execute), accessibility. NO TCC: execute_agent_command, execute_daemon_command.
+        SHELL: execute_agent_command runs as current user. execute_daemon_command runs as ROOT — no sudo needed, it uses a privileged Launch Daemon. Use execute_daemon_command for: system logs, disk diagnostics, network debug, launchd, firewall, /System or /Library access, and any command that would normally require sudo. NEVER use sudo — use execute_daemon_command instead.
+        AGENT SCRIPTS: ~/Documents/AgentScript/agents/. Swift dylibs. Entry: @_cdecl("script_main") public func scriptMain() -> Int32. Args via AGENT_SCRIPT_ARGS env. Full Swift + ScriptingBridge + TCC.
         """
     }
 
     /// Minimal system prompt for coding mode iterations 2+. Saves ~2K tokens per iteration.
     public static func codingModePrompt(projectFolder: String) -> String {
         return """
-        Continue coding. Project: \(projectFolder). Act fast. Call task_complete when done. Re-read after edits. diff_apply for multi-line, edit for single-line. One edit per call. Don't add comments or annotations to unchanged code.
+        Continue coding. Project: \(projectFolder). ALWAYS call task_complete when done. Re-read files after edits. Use diff_apply for multi-line changes. One edit per call.
         """
     }
 
@@ -207,10 +211,9 @@ public enum AgentTools {
         let folder = projectFolder.isEmpty ? userHome : projectFolder
         let n = Name.self
         return """
-        macOS 26 agent on a personal Mac for \(userName). Project: \(folder). Swift 6.2, shell, AppleScript, accessibility. Act fast. Be direct. Call \(n.taskComplete) when done.
-        Don't explain — just do it. Keep output brief. Try the simplest approach first.
-        TOOLS: \(n.fileManager) (read/write/edit/list/search), \(n.executeAgentCommand) (shell), \(n.agentScript) (list/read/create/update/run), git (status/diff/log/commit).
-        One edit per call. Re-read after editing. Use \(n.executeAgentCommand) for shell commands. Don't repeat stdout.
+        macOS agent for \(userName). Project: \(folder). ALWAYS call \(n.taskComplete) when finished. If you need user input, put the question in the summary AND call \(n.taskComplete). Every response MUST end with \(n.taskComplete).
+        TOOLS: \(n.fileManager) (action: read/write/edit/list/search), \(n.executeAgentCommand), \(n.agentScript) (list/read/create/update/run).
+        Shell: \(n.executeAgentCommand) for rm/mv/cp/ls/grep. Don't repeat stdout.
         """
     }
 
@@ -227,11 +230,10 @@ public enum AgentTools {
         Name.fileManager:          #"file_manager {"action": "read", "file_path": "/Users/toddbruss/Documents/example.txt"}"#,
         Name.taskComplete:         #"task_complete {"summary": "Done"}"#,
         Name.git:                  #"git {"action": "status", "path": "/Users/toddbruss/Documents/GitHub/MyRepo"}"#,
-        // apple_event_query removed — use applescript_tool instead
         Name.agentScript:          #"agent {"action": "run", "name": "MyScript"}"#,
         Name.lookupSdef:           #"lookup_sdef {"bundle_id": "com.apple.Music"}"#,
         Name.xcode:                #"xcode {"action": "build"}"#,
-        Name.accessibility:        #"accessibility {"action": "click", "role": "AXButton", "title": "take photo", "appBundleId": "com.apple.PhotoBooth"}"#,
+        Name.accessibility:        #"accessibility {"action": "list_windows"}"#,
         Name.safari:               #"web {"action": "open", "url": "https://example.com"}"#,
         Name.appleScriptTool:      #"applescript_tool {"action": "execute", "source": "display dialog \"Hello\""}"#,
         Name.javascriptTool:       #"javascript_tool {"action": "execute", "source": "var app = Application.currentApplication(); app.displayDialog('Hello')"}"#,
@@ -389,14 +391,14 @@ public enum AgentTools {
             ],
             required: ["action"]
         ),
-        // --- Mode switching ---
+        // --- Coding Mode ---
         ToolDef(
             name: Name.codingMode,
-            description: "Switch tool mode. coding: Core+Workflow+Coding+UserAgent tools. automation: Core+Workflow+Automation+UserAgent tools. standard: all user-enabled tools.",
+            description: "Toggle coding mode on/off. When ON, only Core+Workflow+Coding+UserAgent tools are sent to the LLM — removes conversation, accessibility, automation, web, daemon tools for faster responses. Auto-enables after iteration 1 for coding tasks.",
             properties: [
-                "action": ["type": "string", "description": "Action: coding, automation, or standard"],
+                "enabled": ["type": "boolean", "description": "true to enable coding mode, false to disable and restore all tools"],
             ],
-            required: ["action"]
+            required: ["enabled"]
         ),
         // --- Agent Scripts (reusable Swift scripts) ---
         // --- Agent Scripts (consolidated) ---
@@ -415,6 +417,22 @@ public enum AgentTools {
             required: ["action"]
         ),
         // --- Inline AppleScript/JXA execution now via applescript_tool/javascript_tool execute action ---
+        // --- Automation: Apple Events ---
+        ToolDef(
+            description: "Query a scriptable Mac app via ObjC dispatch. Flat keys, one operation per call. Use lookup_sdef first.",
+            properties: [
+                "bundle_id": ["type": "string", "description": "App bundle identifier (e.g. com.apple.Music)"],
+                "action": ["type": "string", "description": "One of: get, iterate, index, call, filter"],
+                "key": ["type": "string", "description": "Property key for 'get' action"],
+                "properties": ["type": "string", "description": "Comma-separated property names for 'iterate' (e.g. \"name,artist,album\")"],
+                "limit": ["type": "integer", "description": "Max items for 'iterate' (default 50)"],
+                "index": ["type": "integer", "description": "Array index for 'index' action"],
+                "method": ["type": "string", "description": "Method name for 'call' action"],
+                "arg": ["type": "string", "description": "Argument for 'call' action"],
+                "predicate": ["type": "string", "description": "NSPredicate format string for 'filter' action"],
+            ],
+            required: ["bundle_id", "action"]
+        ),
         // --- AppleScript (consolidated) ---
         ToolDef(
             name: Name.appleScriptTool,
@@ -439,64 +457,33 @@ public enum AgentTools {
             ],
             required: ["action"]
         ),
-        // --- Accessibility (consolidated, powered by AXorcist) ---
+        // --- Accessibility (consolidated) ---
         ToolDef(
             name: Name.accessibility,
-            description: "macOS UI automation via AXorcist. IMPORTANT: Use open_app first to see all clickable elements, then click the one you want. Example: 1) open_app appBundleId='Photo Booth' → returns buttons/controls 2) click title='take photo' appBundleId='Photo Booth'. Do NOT call list_windows — use open_app instead. appBundleId accepts app names like 'Photo Booth', 'Safari', 'TextEdit'. Actions: open_app (launch+activate+list elements), click (find+press element), perform_action, type_text, type_into_element, find_element, get_properties, get_children, list_windows, manage_app, click_menu_item, scroll, press_key, screenshot, set_properties, wait_for_element, get_focused_element, read_focused, highlight_element, show_menu, drag, set_window_frame, get_window_frame, scroll_to_element.",
+            description: "macOS Accessibility API for UI automation. Controls any app — click buttons, type text, read elements, manage windows, navigate menus, capture screenshots. For web pages in browsers, use ax_find_element with AXWebArea roles. Use consistent role/title/value selectors across calls.",
             properties: [
-                "action": ["type": "string", "description": "Action to perform. START with open_app to see app elements. Then: click (find+press element), perform_action, type_text, type_into_element, find_element, get_properties, get_children, list_windows, manage_app, click_menu_item, screenshot, scroll, press_key, set_properties, wait_for_element, get_focused_element, read_focused, highlight_element, show_menu, drag, set_window_frame, get_window_frame, scroll_to_element"],
-                "role": ["type": "string", "description": "AX role filter (e.g. AXButton, AXTextField, AXWindow)"],
-                "title": ["type": "string", "description": "Element name to match — searches AXTitle, AXDescription, AXHelp (partial match)"],
+                "action": ["type": "string", "description": "Action: list_windows, inspect_element, get_properties, perform_action, type_text, click (element-based, use role/title), scroll, press_key, screenshot, set_properties, find_element, get_focused_element, get_children, drag, wait (seconds)"],
+                "role": ["type": "string", "description": "AX role (e.g. AXButton, AXTextField)"],
+                "title": ["type": "string", "description": "Title/name to match (partial)"],
                 "value": ["type": "string", "description": "Value to match (partial)"],
-                "appBundleId": ["type": "string", "description": "App bundle ID (e.g. com.apple.PhotoBooth). Required to target a specific app"],
+                "appBundleId": ["type": "string", "description": "App bundle ID to search within"],
                 "x": ["type": "number", "description": "Screen X coordinate"],
                 "y": ["type": "number", "description": "Screen Y coordinate"],
-                "text": ["type": "string", "description": "For type_text/type_into_element: text to type"],
+                "text": ["type": "string", "description": "For type_text: text to type"],
                 "button": ["type": "string", "description": "For click: left/right/middle (default left)"],
                 "clicks": ["type": "integer", "description": "For click: 1 or 2 (default 1)"],
                 "keyCode": ["type": "integer", "description": "For press_key: macOS virtual key code"],
                 "modifiers": ["type": "array", "description": "For press_key: command/option/control/shift", "items": ["type": "string"]],
-                "width": ["type": "number", "description": "For screenshot/set_window_frame: width"],
-                "height": ["type": "number", "description": "For screenshot/set_window_frame: height"],
-                "windowId": ["type": "integer", "description": "For screenshot: window ID"],
+                "width": ["type": "number", "description": "For screenshot: region width"],
+                "height": ["type": "number", "description": "For screenshot: region height"],
+                "windowId": ["type": "integer", "description": "For screenshot/list_windows: window ID"],
                 "limit": ["type": "integer", "description": "For list_windows: max windows (default 50)"],
-                "ax_action": ["type": "string", "description": "For perform_action: AXPress, AXConfirm, AXCancel, AXShowMenu, AXRaise, AXIncrement, AXDecrement"],
+                "ax_action": ["type": "string", "description": "For perform_action: AXPress, AXConfirm, AXActivate, AXCancel, AXShowMenu, AXDismiss, AXIncrement, AXDecrement, AXExpand, AXCollapse, AXOpen, AXRaise, AXZoom, AXMinimize, AXCopy, AXCut, AXPaste, AXSelect, AXSelectAll, AXScrollToVisible, AXScrollPageUp/Down/Left/Right, AXFocus, AXShowDefaultUI, AXShowAlternateUI, AXDelete, AXPick"],
                 "properties": ["type": "object", "description": "For set_properties: key-value pairs to set"],
-                "timeout": ["type": "number", "description": "For find_element/click/wait_for_element: max seconds (default 5)"],
+                "timeout": ["type": "number", "description": "For find_element: max seconds to wait (default 5)"],
                 "depth": ["type": "integer", "description": "For get_children: traversal depth (default 3)"],
-                "menuPath": ["type": "string", "description": "For click_menu_item: menu path separated by ' > ' (e.g. 'File > Save')"],
-                "name": ["type": "string", "description": "For manage_app: app name (e.g. 'Photo Booth')"],
-                "bundleId": ["type": "string", "description": "For manage_app: bundle ID to launch/activate/quit"],
-                "deltaX": ["type": "number", "description": "For scroll: horizontal scroll amount"],
-                "deltaY": ["type": "number", "description": "For scroll: vertical scroll amount (negative=down)"],
-                "fromX": ["type": "number", "description": "For drag: start X"],
-                "fromY": ["type": "number", "description": "For drag: start Y"],
-                "toX": ["type": "number", "description": "For drag: end X"],
-                "toY": ["type": "number", "description": "For drag: end Y"],
             ],
             required: ["action"]
-        ),
-        // --- Clipboard ---
-        ToolDef(
-            name: "clipboard",
-            description: "Clipboard operations: read, write, paste (Cmd+V), copy_image (file to clipboard).",
-            properties: [
-                "action": ["type": "string", "description": "Action: read, write, paste, or copy_image"],
-                "text": ["type": "string", "description": "For write: text to copy"],
-                "file_path": ["type": "string", "description": "For copy_image: path to image file"],
-            ],
-            required: ["action"]
-        ),
-        // --- Symbol Search ---
-        ToolDef(
-            name: "symbol_search",
-            description: "Find Swift symbol definitions (func/class/struct/enum/protocol/var) by name using SwiftSyntax AST.",
-            properties: [
-                "query": ["type": "string", "description": "Symbol name to search for (partial match)"],
-                "path": ["type": "string", "description": "Directory to search (defaults to project folder)"],
-                "exact": ["type": "boolean", "description": "Exact name match (default false)"],
-            ],
-            required: ["query"]
         ),
         // --- Tool Discovery ---
         ToolDef(
@@ -510,7 +497,7 @@ public enum AgentTools {
             name: Name.safari,
             description: "Safari web automation: open/click/type/read_content/execute_js/google_search/navigate/tabs.",
             properties: [
-                "action": ["type": "string", "description": "Action: open, click, type, read_content, execute_js, google_search, navigate, tabs, scan, submit"],
+                "action": ["type": "string", "description": "Action to perform"],
                 "url": ["type": "string", "description": "URL to open"],
                 "selector": ["type": "string", "description": "CSS selector for click/type/submit"],
                 "text": ["type": "string", "description": "Text to type"],
