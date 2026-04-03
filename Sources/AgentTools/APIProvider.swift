@@ -3,6 +3,8 @@ import Foundation
 public enum APIProvider: String, CaseIterable, Codable, Sendable {
     case claude = "claude"
     case openAI = "openAI"
+    case gemini = "gemini"
+    case grok = "grok"
     case deepSeek = "deepSeek"
     case huggingFace = "huggingFace"
     case zAI = "zAI"
@@ -16,6 +18,8 @@ public enum APIProvider: String, CaseIterable, Codable, Sendable {
         switch self {
         case .claude: "Claude"
         case .openAI: "OpenAI"
+        case .gemini: "Google Gemini"
+        case .grok: "Grok"
         case .deepSeek: "DeepSeek"
         case .huggingFace: "Hugging Face"
         case .ollama: "Ollama"
@@ -28,6 +32,6 @@ public enum APIProvider: String, CaseIterable, Codable, Sendable {
     }
 
     public static var selectableProviders: [APIProvider] {
-        [.claude, .openAI, .deepSeek, .huggingFace, .zAI, .ollama, .localOllama, .vLLM, .lmStudio]
+        [.claude, .openAI, .gemini, .grok, .deepSeek, .huggingFace, .zAI, .ollama, .localOllama, .vLLM, .lmStudio]
     }
 }
