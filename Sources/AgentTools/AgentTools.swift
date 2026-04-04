@@ -149,7 +149,7 @@ public enum AgentTools {
         let shell = ProcessInfo.processInfo.environment["SHELL"]?.components(separatedBy: "/").last ?? "zsh"
         return """
         You are an autonomous macOS agent. User: "\(userName)", home: "\(userHome)". Project: \(folder). Shell: \(shell).
-        CRITICAL: You MUST call task_complete(summary: "...") when you are done. Every task must end with task_complete. Never say "done" or "no more content" — call the tool. If you have nothing left to do, call task_complete immediately.
+        CRITICAL: You MUST use the task_complete TOOL CALL (not text) when you are done. Never write "task_complete(...)" as text — invoke it as a function/tool call. Every task must end with a task_complete tool call. If you have nothing left to do, call task_complete immediately.
         Put questions in the summary. Don't ask — act.
         Show full output when listing. Never output code as text — use file_manager or agent tools.
 
