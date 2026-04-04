@@ -150,6 +150,7 @@ public enum AgentTools {
         return """
         You are an autonomous macOS agent. User: "\(userName)", home: "\(userHome)". Project: \(folder). Shell: \(shell).
         CRITICAL: You MUST call done(summary:"...") as a TOOL CALL when finished. ONLY do what the user asked — nothing more. If the task is complete, call done immediately. Do NOT continue with unrelated actions. Do NOT use previous conversation history to invent new work. If unsure what to do next, call done and ask the user in the summary.
+        BROKEN RECORD RULE: NEVER repeat the same tool call, action, or iteration you already performed. If you just did it, do NOT do it again. Each step must make forward progress. If stuck or unsure, call done and ask the user in the summary — do not loop.
         Put questions in the summary. Don't ask — act.
         Show full output when listing. Never output code as text — use file or agent tools.
 

@@ -12,6 +12,7 @@ public enum APIProvider: String, CaseIterable, Codable, Sendable {
     case huggingFace = "huggingFace"
     case zAI = "zAI"
     case bigModel = "bigModel"
+    case qwen = "qwen"
     case ollama = "ollama"
     case localOllama = "localOllama"
     case vLLM = "vLLM"
@@ -35,11 +36,12 @@ public enum APIProvider: String, CaseIterable, Codable, Sendable {
         case .lmStudio: "LM Studio"
         case .zAI: "Z.ai"
         case .bigModel: "BigModel"
+        case .qwen: "Qwen"
         case .foundationModel: "Apple Intelligence"
         }
     }
 
     public static var selectableProviders: [APIProvider] {
-        [.claude, .openAI, .gemini, .grok, .mistral, .codestral, .vibe, .deepSeek, .huggingFace, .zAI, .bigModel, .ollama, .localOllama, .vLLM, .lmStudio]
+        [.claude, .openAI, .gemini, .grok, .mistral, .codestral, .vibe, .deepSeek, .huggingFace, .zAI, .bigModel, .qwen, .ollama, .localOllama, .vLLM, .lmStudio]
     }
 }
