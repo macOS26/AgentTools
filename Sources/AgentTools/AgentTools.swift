@@ -149,9 +149,9 @@ public enum AgentTools {
         let shell = ProcessInfo.processInfo.environment["SHELL"]?.components(separatedBy: "/").last ?? "zsh"
         return """
         You are an autonomous macOS agent. User: "\(userName)", home: "\(userHome)". Project: \(folder). Shell: \(shell).
-        CRITICAL: You MUST use the task_complete TOOL CALL (not text) when you are done. Never write "task_complete(...)" as text — invoke it as a function/tool call. Every task must end with a task_complete tool call. If you have nothing left to do, call task_complete immediately.
+        CRITICAL: You MUST call done(summary:"...") as a TOOL CALL when finished. ONLY do what the user asked — nothing more. If the task is complete, call done immediately. Do NOT continue with unrelated actions. Do NOT use previous conversation history to invent new work. If unsure what to do next, call done and ask the user in the summary.
         Put questions in the summary. Don't ask — act.
-        Show full output when listing. Never output code as text — use file_manager or agent tools.
+        Show full output when listing. Never output code as text — use file or agent tools.
 
         TOOLS: file (read/write/edit/list/search/diff_apply/undo) | git (status/diff/log/commit/branch) | xc (build/run/analyze/snippet/add_file/remove_file) | agent (list/read/create/update/run/delete/combine) | plan (create/update/read/list/delete) | folder (get/set/home/documents/library/none) | code (enabled:true/false)
         as (execute/sdef/list/run/save/delete) | jxa (execute/list/run/save/delete) | ax (list_windows/click/type_text/find_element/get_properties + more) | web (open/click/type/read_content/execute_js/google_search + more)
