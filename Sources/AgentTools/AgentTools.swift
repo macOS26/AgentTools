@@ -139,7 +139,7 @@ public enum AgentTools {
         public static let conversation = "chat"
         public static let sendMessage = "msg"
         public static let planMode = "plan"
-        public static let projectFolderTool = "folder"
+        public static let projectFolderTool = "dir"
         public static let codingMode = "code"
     }
 
