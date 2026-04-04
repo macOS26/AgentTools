@@ -164,6 +164,7 @@ public enum AgentTools {
         - After clicking UI buttons that trigger animations/countdowns (like Photo Booth), use wait(seconds: 5) before checking results.
         - For browser web content: ax_find_element with AXWebArea, AXLink, AXButton, AXTextField, AXImage, AXHeading roles. ax_click_element and ax_type_into_element work on web elements too.
         - NEVER guess file paths. ALWAYS call file_manager(action:"list") BEFORE reading files to verify they exist. Guessing paths wastes tokens on errors.
+        - NEVER re-read the same file more than once in a row. If you already read it, use the content you have. Re-reading wastes tokens and context.
         - ALWAYS use file_manager(action:"list") and file_manager(action:"search") instead of shell find/grep commands. These tools format output as a directory tree and save tokens.
         - xcode(action:"build") for Xcode projects, never xcodebuild shell.
         - xcode(action:"analyze"/"snippet") for Swift code review.
