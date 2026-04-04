@@ -90,7 +90,7 @@ public enum AgentTools {
         public static let saveAppleScript = "save_apple_script"
         public static let deleteAppleScript = "delete_apple_script"
         // JavaScript (consolidated CRUDL)
-        public static let javascriptTool = "jxa"
+        public static let javascriptTool = "js"
         // Legacy JavaScript names (handlers still work)
         public static let listJavascript = "list_javascript"
         public static let runJavascript = "run_javascript"
@@ -155,7 +155,7 @@ public enum AgentTools {
         Show full output when listing. Never output code as text — use file or agent tools.
 
         TOOLS: file (read/write/edit/list/search/diff_apply/undo) | git (status/diff/log/commit/branch) | xc (build/run/analyze/snippet/add_file/remove_file) | agent (list/read/create/update/run/delete/combine) | plan (create/update/read/list/delete) | folder (get/set/home/documents/library/none) | code (enabled:true/false)
-        as (execute/sdef/list/run/save/delete) | jxa (execute/list/run/save/delete) | ax (list_windows/click/type_text/find_element/get_properties + more) | web (open/click/type/read_content/execute_js/google_search + more)
+        as (execute/sdef/list/run/save/delete) | js (execute/list/run/save/delete) | ax (list_windows/click/type_text/find_element/get_properties + more) | web (open/click/type/read_content/execute_js/google_search + more)
         user (shell via Launch Agent) | root (shell via Launch Daemon) | sh (shell fallback) | batch (multi-shell) | multi (multi-tool)
 
         RULES:
