@@ -8,7 +8,7 @@ public enum AgentTools {
     // MARK: - Tool Name Constants (single source of truth)
     public enum Name {
         // File Manager (consolidated CRUDL)
-        public static let fileManager = "file_manager"
+        public static let fileManager = "file"
         // Git (consolidated CRUDL)
         public static let git = "git"
         // Legacy git names (handlers still work)
@@ -23,15 +23,15 @@ public enum AgentTools {
         public static let runOsascript = "run_osascript"
         public static let executeJavascript = "execute_javascript"
         // Shell Execution
-        public static let executeAgentCommand = "execute_agent_command"
-        public static let executeDaemonCommand = "execute_daemon_command"
-        public static let batchCommands = "batch_commands"
-        public static let batchTools = "batch_tools"
-        public static let runShellScript = "run_shell_script"
+        public static let executeAgentCommand = "sh"
+        public static let executeDaemonCommand = "root"
+        public static let batchCommands = "batch"
+        public static let batchTools = "multi"
+        public static let runShellScript = "sh"
         // Task
-        public static let taskComplete = "task_complete"
+        public static let taskComplete = "done"
         // Accessibility (consolidated)
-        public static let accessibility = "accessibility"
+        public static let accessibility = "ax"
         // Legacy ax names (handlers still work)
         public static let axListWindows = "ax_list_windows"
         public static let axInspectElement = "ax_inspect_element"
@@ -73,9 +73,9 @@ public enum AgentTools {
         public static let deleteAgentScript = "delete_agent"
         public static let combineAgentScripts = "combine_agents"
         // SDEF
-        public static let lookupSdef = "lookup_sdef"
+        public static let lookupSdef = "sdef"
         // Xcode (consolidated CRUDL)
-        public static let xcode = "xcode"
+        public static let xcode = "xc"
         // Legacy xcode names (handlers still work)
         public static let xcodeBuild = "xcode_build"
         public static let xcodeRun = "xcode_run"
@@ -83,21 +83,21 @@ public enum AgentTools {
         public static let xcodeSelectProject = "xcode_select_project"
         public static let xcodeGrantPermission = "xcode_grant_permission"
         // AppleScript (consolidated CRUDL)
-        public static let appleScriptTool = "applescript_tool"
+        public static let appleScriptTool = "as"
         // Legacy AppleScript names (handlers still work)
         public static let listAppleScripts = "list_apple_scripts"
         public static let runAppleScript = "run_apple_script"
         public static let saveAppleScript = "save_apple_script"
         public static let deleteAppleScript = "delete_apple_script"
         // JavaScript (consolidated CRUDL)
-        public static let javascriptTool = "javascript_tool"
+        public static let javascriptTool = "jxa"
         // Legacy JavaScript names (handlers still work)
         public static let listJavascript = "list_javascript"
         public static let runJavascript = "run_javascript"
         public static let saveJavascript = "save_javascript"
         public static let deleteJavascript = "delete_javascript"
         // Tool Discovery
-        public static let listNativeTools = "list_tools"
+        public static let listNativeTools = "tools"
 // Safari (consolidated web automation)
         public static let safari = "web"
         // Legacy web_ names (handlers still work)
@@ -122,7 +122,7 @@ public enum AgentTools {
         public static let webCloseWindow = "web_close_window"
         public static let webWaitForElement = "web_wait_for_element"
         // Selenium (consolidated CRUDL)
-        public static let seleniumTool = "selenium"
+        public static let seleniumTool = "sel"
         // Legacy selenium names (handlers still work)
         public static let seleniumStart = "selenium_start"
         public static let seleniumStop = "selenium_stop"
@@ -134,13 +134,13 @@ public enum AgentTools {
         public static let seleniumScreenshot = "selenium_screenshot"
         public static let seleniumWait = "selenium_wait"
         // Ollama-only
-        public static let webSearch = "web_search"
+        public static let webSearch = "search"
         // Conversation (consolidated CRUDL)
-        public static let conversation = "conversation"
-        public static let sendMessage = "send_message"
-        public static let planMode = "plan_mode"
-        public static let projectFolderTool = "project_folder"
-        public static let codingMode = "coding_mode"
+        public static let conversation = "chat"
+        public static let sendMessage = "msg"
+        public static let planMode = "plan"
+        public static let projectFolderTool = "folder"
+        public static let codingMode = "code"
     }
 
     // MARK: - Full LLM System Prompt (Desktop: Claude, Ollama, OpenAI, etc.)
@@ -153,34 +153,34 @@ public enum AgentTools {
         Put questions in the summary. Don't ask — act.
         Show full output when listing. Never output code as text — use file_manager or agent tools.
 
-        TOOLS: file_manager (read/write/edit/list/search/diff_apply/extract_function) | git (status/diff/log/commit/branch) | xcode (build/run/analyze/snippet/add_file/remove_file) | agent (list/read/create/update/run/delete/combine) | plan_mode (create/update/read/list/delete) | project_folder (get/set/home/documents/library/none) | coding_mode (enabled:true/false)
-        applescript_tool (execute/lookup_sdef/list/run/save/delete) | javascript_tool (execute/list/run/save/delete) | accessibility (list_windows/click/type_text/find_element/get_properties + more) | web (open/click/type/read_content/execute_js/google_search + more)
-        execute_agent_command (shell) | execute_daemon_command (root shell) | batch_commands (multi-shell) | batch_tools (multi-tool) | run_shell_script (shell with fallback)
+        TOOLS: file (read/write/edit/list/search/diff_apply/undo) | git (status/diff/log/commit/branch) | xc (build/run/analyze/snippet/add_file/remove_file) | agent (list/read/create/update/run/delete/combine) | plan (create/update/read/list/delete) | folder (get/set/home/documents/library/none) | code (enabled:true/false)
+        as (execute/sdef/list/run/save/delete) | jxa (execute/list/run/save/delete) | ax (list_windows/click/type_text/find_element/get_properties + more) | web (open/click/type/read_content/execute_js/google_search + more)
+        sh (shell as user) | root (shell as root) | batch (multi-shell) | multi (multi-tool)
 
         RULES:
-        - Prefer built-in tools over MCP (mcp_*). Use file_manager for files, git for VCS, xcode for builds.
-        - PREFER ax_ accessibility tools over screenshots for reading UI. ax_find_element, ax_inspect_element, ax_get_children read text, roles, values instantly. Only use screenshots when visual layout matters.
-        - ALWAYS use element-based clicks (ax_click_element with role/title/appBundleId) — NEVER use coordinate clicks. Element clicks find the button and click its center automatically.
+        - Prefer built-in tools over MCP (mcp_*). Use file for files, git for VCS, xc for builds.
+        - PREFER ax_ tools over screenshots for reading UI. ax_find_element, ax_inspect_element, ax_get_children read text, roles, values instantly. Only use screenshots when visual layout matters.
+        - ALWAYS use element-based clicks (ax_click_element with role/title/appBundleId) — NEVER use coordinate clicks.
         - After clicking UI buttons that trigger animations/countdowns (like Photo Booth), use wait(seconds: 5) before checking results.
-        - For browser web content: ax_find_element with AXWebArea, AXLink, AXButton, AXTextField, AXImage, AXHeading roles. ax_click_element and ax_type_into_element work on web elements too.
-        - NEVER guess file paths. ALWAYS call file_manager(action:"list") BEFORE reading files to verify they exist. Guessing paths wastes tokens on errors.
-        - NEVER re-read the same file more than once in a row. If you already read it, use the content you have. Re-reading wastes tokens and context.
-        - ALWAYS use file_manager(action:"list") and file_manager(action:"search") instead of shell find/grep commands. These tools format output as a directory tree and save tokens.
-        - xcode(action:"build") for Xcode projects, never xcodebuild shell.
-        - xcode(action:"analyze"/"snippet") for Swift code review.
+        - For browser web content: ax_find_element with AXWebArea, AXLink, AXButton, AXTextField, AXImage, AXHeading roles.
+        - NEVER guess file paths. ALWAYS call file(action:"list") BEFORE reading files to verify they exist.
+        - NEVER re-read the same file more than once in a row. Use the content you have.
+        - ALWAYS use file(action:"list") and file(action:"search") instead of shell find/grep commands.
+        - xc(action:"build") for Xcode projects, never xcodebuild shell.
+        - xc(action:"analyze"/"snippet") for Swift code review.
         - Safari JS via AppleScript preferred for web: `tell application "Safari" to do JavaScript "..." in document 1`.
-        - For 3+ step tasks, create a plan_mode plan first, then execute each step.
-        - EDITING FILES (file_manager actions):
+        - For 3+ step tasks, create a plan first, then execute each step.
+        - EDITING FILES (file actions):
           edit: exact string replace (old_string → new_string). Best for single-line changes.
           diff_apply: replace a line range (file_path, start_line, end_line, destination). Best for multi-line edits. PREFERRED for code changes.
           create: preview a diff without applying (returns diff_id). Use with apply to review before committing.
           apply: commit a previewed diff by diff_id from create.
           undo: revert the last edit on a file.
           ALWAYS re-read file after any edit — line numbers shift. One edit per call.
-        - SPLITTING FILES: read → write new → xcode add_file → edit original → xcode build. One file at a time.
+        - SPLITTING FILES: read → write new → xc add_file → edit original → xc build. One file at a time.
 
-        TCC (in-process): agent(run), applescript_tool(execute), accessibility. NO TCC: execute_agent_command, execute_daemon_command.
-        SHELL: execute_agent_command runs as current user. execute_daemon_command runs as ROOT — no sudo needed, it uses a privileged Launch Daemon. Use execute_daemon_command for: system logs, disk diagnostics, network debug, launchd, firewall, /System or /Library access, and any command that would normally require sudo. NEVER use sudo — use execute_daemon_command instead.
+        TCC (in-process): agent(run), as(execute), ax. NO TCC: sh, root.
+        SHELL: sh runs as current user. root runs as ROOT — no sudo needed, it uses a privileged Launch Daemon. Use root for: system logs, disk diagnostics, network debug, launchd, firewall, /System or /Library access. NEVER use sudo — use root instead.
         AGENT SCRIPTS: ~/Documents/AgentScript/agents/. Swift dylibs. Entry: @_cdecl("script_main") public func scriptMain() -> Int32. Args via AGENT_SCRIPT_ARGS env. Full Swift + ScriptingBridge + TCC.
         """
     }
