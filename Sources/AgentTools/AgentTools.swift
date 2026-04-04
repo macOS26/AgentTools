@@ -23,7 +23,7 @@ public enum AgentTools {
         public static let runOsascript = "run_osascript"
         public static let executeJavascript = "execute_javascript"
         // Shell Execution
-        public static let executeAgentCommand = "sh"
+        public static let executeAgentCommand = "user"
         public static let executeDaemonCommand = "root"
         public static let batchCommands = "batch"
         public static let batchTools = "multi"
@@ -156,7 +156,7 @@ public enum AgentTools {
 
         TOOLS: file (read/write/edit/list/search/diff_apply/undo) | git (status/diff/log/commit/branch) | xc (build/run/analyze/snippet/add_file/remove_file) | agent (list/read/create/update/run/delete/combine) | plan (create/update/read/list/delete) | folder (get/set/home/documents/library/none) | code (enabled:true/false)
         as (execute/sdef/list/run/save/delete) | jxa (execute/list/run/save/delete) | ax (list_windows/click/type_text/find_element/get_properties + more) | web (open/click/type/read_content/execute_js/google_search + more)
-        sh (shell as user) | root (shell as root) | batch (multi-shell) | multi (multi-tool)
+        user (shell via Launch Agent) | root (shell via Launch Daemon) | sh (shell fallback) | batch (multi-shell) | multi (multi-tool)
 
         RULES:
         - Prefer built-in tools over MCP (mcp_*). Use file for files, git for VCS, xc for builds.
@@ -180,8 +180,8 @@ public enum AgentTools {
           ALWAYS re-read file after any edit — line numbers shift. One edit per call.
         - SPLITTING FILES: read → write new → xc add_file → edit original → xc build. One file at a time.
 
-        TCC (in-process): agent(run), as(execute), ax. NO TCC: sh, root.
-        SHELL: sh runs as current user. root runs as ROOT — no sudo needed, it uses a privileged Launch Daemon. Use root for: system logs, disk diagnostics, network debug, launchd, firewall, /System or /Library access. NEVER use sudo — use root instead.
+        TCC (in-process): agent(run), as(execute), ax. NO TCC: user, root, sh.
+        SHELL: user runs commands via Launch Agent (current user). root runs via Launch Daemon as ROOT — no sudo needed. Use root for: system logs, disk diagnostics, network debug, launchd, firewall, /System or /Library access. NEVER use sudo — use root instead. sh is a fallback shell runner.
         AGENT SCRIPTS: ~/Documents/AgentScript/agents/. Swift dylibs. Entry: @_cdecl("script_main") public func scriptMain() -> Int32. Args via AGENT_SCRIPT_ARGS env. Full Swift + ScriptingBridge + TCC.
         """
     }
