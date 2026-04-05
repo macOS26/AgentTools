@@ -163,6 +163,7 @@ public enum AgentTools {
         TOOLS: file (read/write/edit/list/search/diff_apply/undo) | git (status/diff/log/commit/branch) | xc (build/run/analyze/snippet/add_file/remove_file) | agent (list/read/create/update/run/delete/combine) | plan (create/update/read/list/delete) | folder (get/set/home/documents/library/none) | code (enabled:true/false)
         as (execute/sdef/list/run/save/delete) | js (execute/list/run/save/delete) | ax (find_element/click_element/click/type_text/list_windows/get_properties + more) | web (open/click/type/read_content/execute_js/google_search + more)
         user (shell via Launch Agent) | root (shell via Launch Daemon) | sh (shell fallback) | batch (multi-shell) | multi (multi-tool)
+        spawn_agent (parallel sub-agent) | send_message_to_agent (direct sub-agent) | ask_user_question (mid-task dialog) | web_fetch (read URL) | invoke_skill (prompt templates) | memory (read/write/append/clear/list/save/load/delete)
 
         RULES:
         - Prefer built-in tools over MCP (mcp_*). Use file for files, git for VCS, xc for builds.
@@ -536,6 +537,56 @@ public enum AgentTools {
                 "filename": ["type": "string", "description": "For screenshot: filename"],
                 "timeout": ["type": "number", "description": "For wait: max seconds (default 10)"],
                 "capabilities": ["type": "object", "description": "For start: WebDriver capabilities"],
+            ],
+            required: ["action"]
+        ),
+        // --- Agent Tools (sub-agents, messaging, questions) ---
+        ToolDef(
+            name: "spawn_agent",
+            description: "Spawn an isolated sub-agent for parallel work. Returns immediately. Results arrive as <task-notification>. Max 3 concurrent.",
+            properties: [
+                "name": ["type": "string", "description": "Agent name (for messaging)"],
+                "prompt": ["type": "string", "description": "Complete task description — agent can't see parent conversation"],
+                "tools": ["type": "string", "description": "Tool access: all, coding, automation, or comma-separated group names. Default: Core+Work+Code"],
+                "max_iterations": ["type": "integer", "description": "Max LLM turns (default 15)"],
+            ],
+            required: ["prompt"]
+        ),
+        ToolDef(
+            name: "send_message_to_agent",
+            description: "Send a message to a running sub-agent. Agent receives it as <message from coordinator> in its next turn.",
+            properties: [
+                "to": ["type": "string", "description": "Agent name or ID prefix"],
+                "message": ["type": "string", "description": "Message content — instructions, data, or follow-up work"],
+            ],
+            required: ["to", "message"]
+        ),
+        ToolDef(
+            name: "ask_user_question",
+            description: "Ask the user a question mid-task without stopping. Shows a dialog and waits for answer (up to 5 min).",
+            properties: [
+                "question": ["type": "string", "description": "The question to ask"],
+            ],
+            required: ["question"]
+        ),
+        ToolDef(
+            name: "web_fetch",
+            description: "Fetch content from a URL. Returns text with HTML stripped, capped at 8K chars.",
+            properties: [
+                "url": ["type": "string", "description": "URL to fetch"],
+            ],
+            required: ["url"]
+        ),
+        ToolDef(
+            name: "invoke_skill",
+            description: "Invoke a reusable skill (prompt template). Actions: list, invoke (by name), save, delete.",
+            properties: [
+                "action": ["type": "string", "description": "Action: list, invoke, save, delete"],
+                "name": ["type": "string", "description": "Skill name (for invoke/delete)"],
+                "id": ["type": "string", "description": "Skill ID (for save/delete)"],
+                "description": ["type": "string", "description": "For save: skill description"],
+                "when_to_use": ["type": "string", "description": "For save: when to invoke this skill"],
+                "content": ["type": "string", "description": "For save: prompt template content"],
             ],
             required: ["action"]
         ),
