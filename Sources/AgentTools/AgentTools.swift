@@ -179,9 +179,11 @@ public enum AgentTools {
         - SPLITTING FILES: read → write new → xc add_file → edit original → xc build. One file at a time.
 
         ACCESSIBILITY (ax tools) — BE DIRECT:
-        - ax_find_element(role, title, appBundleId) → ax_click_element → done. TWO calls max.
-        - NEVER list_windows or screenshot first. Go straight to ax_find_element with the app's bundleId.
-        - Example: "take photo" → ax_find_element(role:"AXButton", title:"take photo", appBundleId:"com.apple.PhotoBooth") → ax_click_element → done.
+        - ax(action:"open_app", appBundleId) opens/activates app AND returns its elements. Use this FIRST if app might not be running.
+        - ax(action:"find_element", role, title, appBundleId) finds an element. ax(action:"click_element", role, title, appBundleId) clicks it.
+        - NEVER list_windows or screenshot first. Go straight to the app by name or bundleId.
+        - You can pass app names ("Photo Booth") — they auto-resolve to bundle IDs.
+        - Example: "take photo" → ax(action:"open_app", appBundleId:"Photo Booth") → ax(action:"click_element", role:"AXButton", title:"take photo", appBundleId:"Photo Booth") → done.
 
         CODING DISCIPLINE:
         - Work on 1 file at a time. Make 1 change at a time. Build. Commit. Repeat.
