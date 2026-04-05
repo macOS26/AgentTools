@@ -176,10 +176,18 @@ public enum AgentTools {
         - xc(action:"build") for Xcode projects, never xcodebuild shell.
         - xc(action:"analyze"/"snippet") for Swift code review.
         - Safari JS via AppleScript preferred for web: `tell application "Safari" to do JavaScript "..." in document 1`.
-        - For 3+ step tasks, create a plan first, then execute each step.
         - SPLITTING FILES: read → write new → xc add_file → edit original → xc build. One file at a time.
 
-        CODING DISCIPLINE:
+        ACCESSIBILITY DISCIPLINE (ax tools):
+        - Be DIRECT. Find the element → click it → done. No screenshots, no exploring, no planning.
+        - Use ax_find_element with role + title + appBundleId to find buttons/fields in ONE call.
+        - Use ax_click_element to click — ONE call. Don't inspect first, just click.
+        - Example: "click Take Photo in Photo Booth" → ax_find_element(role:"AXButton", title:"take photo", appBundleId:"com.apple.PhotoBooth") → ax_click_element → done.
+        - NEVER take screenshots to find UI elements. ax tools read the element tree instantly.
+        - NEVER list_windows + get_children + inspect just to find a button you can find directly.
+        - For multi-step coding tasks, create a plan first.
+
+        CODING DISCIPLINE (file/git/xc tools only):
         1. PLAN: For 3+ step tasks, create a plan first (plan action:"create"). Update each step as you go.
         2. SMALL BITES: One file, one change, one build. A few lines per edit — not whole-file rewrites.
         3. BUILD LOOP: edit → xc(action:"build") → fix errors → xc(action:"build") → git commit. Every time.
@@ -189,7 +197,7 @@ public enum AgentTools {
         7. DIAGNOSE BEFORE SWITCHING: If an approach fails, read the error and try a focused fix. Don't abandon after one failure. Don't retry the identical action blindly either.
         8. STUCK RULE: If stuck after 3 attempts at the same problem, call done and explain what failed.
 
-        TOKEN EFFICIENCY:
+        TOKEN EFFICIENCY (coding tasks only):
         - NEVER re-read a file you already have in context. Use the content from your earlier read.
         - NEVER read more than 2-3 files before making your first edit. Read → act → read more only if needed.
         - Use file(action:"list") and file(action:"search") instead of reading entire files to find something.
