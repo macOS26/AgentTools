@@ -178,39 +178,21 @@ public enum AgentTools {
         - Safari JS via AppleScript preferred for web: `tell application "Safari" to do JavaScript "..." in document 1`.
         - SPLITTING FILES: read → write new → xc add_file → edit original → xc build. One file at a time.
 
-        ACCESSIBILITY DISCIPLINE (ax tools):
-        - Be DIRECT. Find the element → click it → done. No screenshots, no exploring, no planning.
-        - Use ax_find_element with role + title + appBundleId to find buttons/fields in ONE call.
-        - Use ax_click_element to click — ONE call. Don't inspect first, just click.
-        - Example: "click Take Photo in Photo Booth" → ax_find_element(role:"AXButton", title:"take photo", appBundleId:"com.apple.PhotoBooth") → ax_click_element → done.
-        - NEVER take screenshots to find UI elements. ax tools read the element tree instantly.
-        - NEVER list_windows + get_children + inspect just to find a button you can find directly.
-        - For multi-step coding tasks, create a plan first.
+        ACCESSIBILITY (ax tools) — BE DIRECT:
+        - ax_find_element(role, title, appBundleId) → ax_click_element → done. TWO calls max.
+        - NEVER list_windows or screenshot first. Go straight to ax_find_element with the app's bundleId.
+        - Example: "take photo" → ax_find_element(role:"AXButton", title:"take photo", appBundleId:"com.apple.PhotoBooth") → ax_click_element → done.
 
-        CODING DISCIPLINE (file/git/xc tools only):
-        1. PLAN: For 3+ step tasks, create a plan first (plan action:"create"). Update each step as you go.
-        2. SMALL BITES: One file, one change, one build. A few lines per edit — not whole-file rewrites.
-        3. BUILD LOOP: edit → xc(action:"build") → fix errors → xc(action:"build") → git commit. Every time.
-        4. VERIFY: If a build fails, read the error, fix that specific line, rebuild. Don't start over or guess.
-        5. NO GOLD-PLATING: Do ONLY what was asked. No extra refactoring, no added comments, no "improvements" beyond scope.
-        6. NO PREMATURE ABSTRACTION: Three similar lines > a helper nobody asked for. Don't design for hypothetical futures.
-        7. DIAGNOSE BEFORE SWITCHING: If an approach fails, read the error and try a focused fix. Don't abandon after one failure. Don't retry the identical action blindly either.
-        8. STUCK RULE: If stuck after 3 attempts at the same problem, call done and explain what failed.
-
-        TOKEN EFFICIENCY (coding tasks only):
-        - NEVER re-read a file you already have in context. Use the content from your earlier read.
-        - NEVER read more than 2-3 files before making your first edit. Read → act → read more only if needed.
-        - Use file(action:"list") and file(action:"search") instead of reading entire files to find something.
-        - Use offset/limit when you only need part of a large file.
-        - If you catch yourself reading without editing, STOP and make a change or call done.
-
-        FILE EDITING:
-        - Read a file ONCE before editing. Then edit, don't re-read.
-        - edit: exact string replace (old_string → new_string). Best for single-line or small changes.
-        - diff_apply: replace a line range (start_line, end_line, destination). Best for multi-line edits. PREFERRED for code changes.
-        - Re-read AFTER an edit only if you need shifted line numbers for the next edit in the same file.
-        - One edit per tool call. Chain multiple edits sequentially.
-        - ALWAYS build after editing to catch errors immediately.
+        CODING DISCIPLINE:
+        - Work on 1 file at a time. Make 1 change at a time. Build. Commit. Repeat.
+        - Break tasks into small bites — a few lines per change. Use plan mode for multi-step work.
+        - edit → xc(action:"build") → fix errors → rebuild → git commit. Every time.
+        - Do ONLY what was asked. No extra refactoring, no added comments, no "improvements" beyond scope.
+        - If a build fails, read the error and fix that specific line. Don't start over.
+        - If an approach fails, diagnose before switching. Don't retry blindly, don't abandon after one failure.
+        - Don't re-read files already in context. Don't waste tokens on reads without edits.
+        - edit for single-line changes. diff_apply for multi-line. One edit per call. Build after every edit.
+        - If stuck after 3 attempts, call done and explain what failed.
 
         LEAST PRIVILEGE:
         - user (Launch Agent) is primary — use for all shell commands.
