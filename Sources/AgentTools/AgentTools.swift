@@ -161,7 +161,7 @@ public enum AgentTools {
         Show full output when listing. Never output code as text — use file or agent tools.
 
         TOOLS: file (read/write/edit/list/search/diff_apply/undo) | git (status/diff/log/commit/branch) | xc (build/run/analyze/snippet/add_file/remove_file) | agent (list/read/create/update/run/delete/combine) | plan (create/update/read/list/delete) | folder (get/set/home/documents/library/none) | code (enabled:true/false)
-        as (execute/sdef/list/run/save/delete) | js (execute/list/run/save/delete) | ax (list_windows/click/type_text/find_element/get_properties + more) | web (open/click/type/read_content/execute_js/google_search + more)
+        as (execute/sdef/list/run/save/delete) | js (execute/list/run/save/delete) | ax (find_element/click_element/click/type_text/list_windows/get_properties + more) | web (open/click/type/read_content/execute_js/google_search + more)
         user (shell via Launch Agent) | root (shell via Launch Daemon) | sh (shell fallback) | batch (multi-shell) | multi (multi-tool)
 
         RULES:
@@ -259,7 +259,7 @@ public enum AgentTools {
         Name.agentScript:          #"agent {"action": "run", "name": "MyScript"}"#,
         Name.lookupSdef:           #"lookup_sdef {"bundle_id": "com.apple.Music"}"#,
         Name.xcode:                #"xcode {"action": "build"}"#,
-        Name.accessibility:        #"accessibility {"action": "list_windows"}"#,
+        Name.accessibility:        #"accessibility {"action": "find_element", "role": "AXButton", "title": "take photo", "appBundleId": "com.apple.PhotoBooth"}"#,
         Name.safari:               #"web {"action": "open", "url": "https://example.com"}"#,
         Name.appleScriptTool:      #"applescript_tool {"action": "execute", "source": "display dialog \"Hello\""}"#,
         Name.javascriptTool:       #"javascript_tool {"action": "execute", "source": "var app = Application.currentApplication(); app.displayDialog('Hello')"}"#,
@@ -471,7 +471,7 @@ public enum AgentTools {
             name: Name.accessibility,
             description: "macOS Accessibility API for UI automation. Controls any app — click buttons, type text, read elements, manage windows, navigate menus, capture screenshots. For web pages in browsers, use ax_find_element with AXWebArea roles. Use consistent role/title/value selectors across calls.",
             properties: [
-                "action": ["type": "string", "description": "Action: list_windows, inspect_element, get_properties, perform_action, type_text, click (element-based, use role/title), scroll, press_key, screenshot, set_properties, find_element, get_focused_element, get_children, drag, wait (seconds)"],
+                "action": ["type": "string", "description": "Action: find_element (PREFERRED — use role/title/appBundleId), click_element, click, type_text, list_windows, inspect_element, get_properties, perform_action, scroll, press_key, screenshot, set_properties, get_focused_element, get_children, drag, wait (seconds)"],
                 "role": ["type": "string", "description": "AX role (e.g. AXButton, AXTextField)"],
                 "title": ["type": "string", "description": "Title/name to match (partial)"],
                 "value": ["type": "string", "description": "Value to match (partial)"],
