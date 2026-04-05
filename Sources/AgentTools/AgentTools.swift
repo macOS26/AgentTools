@@ -180,7 +180,9 @@ public enum AgentTools {
 
         ACCESSIBILITY (ax tools) — BE DIRECT:
         - ax(action:"open_app", appBundleId) opens/activates app AND returns its elements. Use this FIRST if app might not be running.
-        - ax(action:"find_element", role, title, appBundleId) finds an element. ax(action:"click_element", role, title, appBundleId) clicks it.
+        - ax(action:"click_element", role, title, appBundleId) finds AND clicks in ONE call. PREFERRED for clicking.
+        - ax(action:"find_element", role, title, appBundleId) finds without clicking. Use only when you need to read element properties.
+        - NEVER use perform_action with AXPress — use click_element instead, it handles all click fallbacks automatically.
         - NEVER list_windows or screenshot first. Go straight to the app by name or bundleId.
         - You can pass app names ("Photo Booth") — they auto-resolve to bundle IDs.
         - Example: "take photo" → ax(action:"open_app", appBundleId:"Photo Booth") → ax(action:"click_element", role:"AXButton", title:"take photo", appBundleId:"Photo Booth") → done.
