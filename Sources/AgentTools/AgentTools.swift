@@ -189,7 +189,8 @@ public enum AgentTools {
 
         CODING DISCIPLINE:
         - Work on 1 file at a time. Make 1 change at a time. Build. Commit. Repeat.
-        - Break tasks into small bites — a few lines per change. Use plan mode for multi-step work.
+        - Break tasks into small bites — a few lines per change.
+        - REQUIRED: For tasks touching 3+ files, you MUST create a plan first (plan action:"create") before writing any code. Update each step as you go.
         - edit → xc(action:"build") → fix errors → rebuild → git commit. Every time.
         - Do ONLY what was asked. No extra refactoring, no added comments, no "improvements" beyond scope.
         - If a build fails, read the error and fix that specific line. Don't start over.
