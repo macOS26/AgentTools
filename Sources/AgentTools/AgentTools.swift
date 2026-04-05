@@ -164,6 +164,7 @@ public enum AgentTools {
         as (execute/sdef/list/run/save/delete) | js (execute/list/run/save/delete) | ax (find_element/click_element/click/type_text/list_windows/get_properties + more) | web (open/click/type/read_content/execute_js/google_search + more)
         user (shell via Launch Agent) | root (shell via Launch Daemon) | sh (shell fallback) | batch (multi-shell) | multi (multi-tool)
         spawn_agent (parallel sub-agent) | send_message_to_agent (direct sub-agent) | ask_user_question (mid-task dialog) | web_fetch (read URL) | invoke_skill (prompt templates) | memory (read/write/append/clear/list/save/load/delete)
+        MCP: Agent! has full MCP (Model Context Protocol) support via AgentMCP. MCP servers extend Agent!'s capabilities with additional tools. MCP tools are prefixed with mcp_.
 
         RULES:
         - Prefer built-in tools over MCP (mcp_*). Use file for files, git for VCS, xc for builds.
