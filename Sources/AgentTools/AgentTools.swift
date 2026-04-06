@@ -8,9 +8,9 @@ public enum AgentTools {
     // MARK: - Tool Name Constants (single source of truth)
     public enum Name {
         // File Manager (consolidated CRUDL)
-        public static let fileManager = "file_tool"
+        public static let fileManager = "file"
         // Git (consolidated CRUDL)
-        public static let git = "git_tool"
+        public static let git = "git"
         // Legacy git names (handlers still work)
         public static let gitStatus = "git_status"
         public static let gitDiff = "git_diff"
@@ -23,15 +23,15 @@ public enum AgentTools {
         public static let runOsascript = "run_osascript"
         public static let executeJavascript = "execute_javascript"
         // Shell Execution
-        public static let executeAgentCommand = "user_shell_tool"
-        public static let executeDaemonCommand = "root_shell_tool"
-        public static let batchCommands = "batch_shell_tool"
-        public static let batchTools = "multi_tool"
-        public static let runShellScript = "shell_tool"
+        public static let executeAgentCommand = "user_shell"
+        public static let executeDaemonCommand = "root_shell"
+        public static let batchCommands = "batch_shell"
+        public static let batchTools = "multi"
+        public static let runShellScript = "shell"
         // Task
-        public static let taskComplete = "done_tool"
+        public static let taskComplete = "done"
         // Accessibility (consolidated)
-        public static let accessibility = "accessibility_tool"
+        public static let accessibility = "accessibility"
         // Legacy ax names (handlers still work)
         public static let axListWindows = "ax_list_windows"
         public static let axInspectElement = "ax_inspect_element"
@@ -63,7 +63,7 @@ public enum AgentTools {
         public static let axScrollToElement = "ax_scroll_to_element"
         public static let axReadFocused = "ax_read_focused"
         // Agent Script (consolidated CRUDL)
-        public static let agentScript = "agent_script_tool"
+        public static let agentScript = "agent_script"
         // Agent action names (expanded from consolidated "agent" tool)
         public static let listAgentScripts = "list_agents"
         public static let readAgentScript = "read_agent"
@@ -73,9 +73,9 @@ public enum AgentTools {
         public static let deleteAgentScript = "delete_agent"
         public static let combineAgentScripts = "combine_agents"
         // SDEF
-        public static let lookupSdef = "sdef_tool"
+        public static let lookupSdef = "sdef"
         // Xcode (consolidated CRUDL)
-        public static let xcode = "xcode_tool"
+        public static let xcode = "xcode"
         // Legacy xcode names (handlers still work)
         public static let xcodeBuild = "xcode_build"
         public static let xcodeRun = "xcode_run"
@@ -83,23 +83,23 @@ public enum AgentTools {
         public static let xcodeSelectProject = "xcode_select_project"
         public static let xcodeGrantPermission = "xcode_grant_permission"
         // AppleScript (consolidated CRUDL)
-        public static let appleScriptTool = "applescript_tool"
+        public static let appleScriptTool = "applescript"
         // Legacy AppleScript names (handlers still work)
         public static let listAppleScripts = "list_apple_scripts"
         public static let runAppleScript = "run_apple_script"
         public static let saveAppleScript = "save_apple_script"
         public static let deleteAppleScript = "delete_apple_script"
         // JavaScript (consolidated CRUDL)
-        public static let javascriptTool = "javascript_tool"
+        public static let javascriptTool = "javascript"
         // Legacy JavaScript names (handlers still work)
         public static let listJavascript = "list_javascript"
         public static let runJavascript = "run_javascript"
         public static let saveJavascript = "save_javascript"
         public static let deleteJavascript = "delete_javascript"
         // Tool Discovery
-        public static let listNativeTools = "list_tools_tool"
+        public static let listNativeTools = "list_tools"
 // Safari (consolidated web automation)
-        public static let safari = "safari_tool"
+        public static let safari = "safari"
         // Legacy web_ names (handlers still work)
         public static let safariOpen = "web_open"
         public static let safariFind = "web_find"
@@ -122,7 +122,7 @@ public enum AgentTools {
         public static let webCloseWindow = "web_close_window"
         public static let webWaitForElement = "web_wait_for_element"
         // Selenium (consolidated CRUDL)
-        public static let seleniumTool = "selenium_tool"
+        public static let seleniumTool = "selenium"
         // Legacy selenium names (handlers still work)
         public static let seleniumStart = "selenium_start"
         public static let seleniumStop = "selenium_stop"
@@ -134,13 +134,13 @@ public enum AgentTools {
         public static let seleniumScreenshot = "selenium_screenshot"
         public static let seleniumWait = "selenium_wait"
         // Ollama-only
-        public static let webSearch = "search_tool"
+        public static let webSearch = "search"
         // Conversation (consolidated CRUDL)
-        public static let conversation = "chat_tool"
+        public static let conversation = "chat"
         public static let sendMessage = "msg"
-        public static let planMode = "plan_tool"
-        public static let projectFolderTool = "directory_tool"
-        public static let codingMode = "mode_tool"
+        public static let planMode = "plan"
+        public static let projectFolderTool = "directory"
+        public static let codingMode = "mode"
     }
 
     // MARK: - Full LLM System Prompt (Desktop: Claude, Ollama, OpenAI, etc.)
@@ -160,57 +160,57 @@ public enum AgentTools {
         Put questions in the summary. Don't ask — act.
         Show full output when listing. Never output code as text — use file or agent tools.
 
-        TOOLS: file_tool (read/write/edit/list/search/diff_apply/undo/mkdir/cd) | git_tool (status/diff/log/commit/branch/worktree) | xcode_tool (build/run/analyze/snippet/add_file/remove_file/get_version/bump_version/bump_build) | agent_script_tool (list/read/create/update/run/delete/combine) | plan_tool (create/update/read/list/delete) | directory_tool (get/set/home/documents/library/none) | mode_tool (coding_mode/workflow_mode/standard_mode)
-        applescript_tool (execute/sdef/list/run/save/delete) | javascript_tool (execute/list/run/save/delete) | accessibility_tool (open_app/find_element/click_element/click/type_text/list_windows/get_properties + more) | safari_tool (open/click/type/read_content/execute_js/google_search + more)
-        user_shell_tool (shell via Launch Agent) | root_shell_tool (shell via Launch Daemon) | shell_tool (shell fallback) | batch_shell_tool (multi-shell) | multi_tool (multi-tool)
+        TOOLS: file (read/write/edit/list/search/diff_apply/undo/mkdir/cd) | git (status/diff/log/commit/branch/worktree) | xcode (build/run/analyze/snippet/add_file/remove_file/get_version/bump_version/bump_build) | agent_script (list/read/create/update/run/delete/combine) | plan (create/update/read/list/delete) | directory (get/set/home/documents/library/none) | mode (coding_mode/workflow_mode/standard_mode)
+        applescript (execute/sdef/list/run/save/delete) | javascript (execute/list/run/save/delete) | accessibility (open_app/find_element/click_element/click/type_text/list_windows/get_properties + more) | safari (open/click/type/read_content/execute_js/google_search + more)
+        user_shell (shell via Launch Agent) | root_shell (shell via Launch Daemon) | shell (shell fallback) | batch_shell (multi-shell) | multi (multi-tool)
         spawn_agent (parallel sub-agent) | send_message_to_agent (direct sub-agent) | ask_user_question (mid-task dialog) | web_fetch (read URL) | invoke_skill (prompt templates) | memory (read/write/append/clear/list/save/load/delete)
         MCP: Agent! has full MCP (Model Context Protocol) support via AgentMCP. MCP servers extend Agent!'s capabilities with additional tools. MCP tools are prefixed with mcp_.
 
         RULES:
-        - Prefer built-in tools over MCP (mcp_*). Use file_tool for files, git_tool for VCS, xcode_tool for builds.
-        - PREFER accessibility_tool over screenshots for reading UI. accessibility_tool(action:"find_element") reads text, roles, values instantly. Only use screenshots when visual layout matters.
-        - ALWAYS use element-based clicks (accessibility_tool action:"click_element" with role/title/appBundleId) — NEVER use coordinate clicks.
+        - Prefer built-in tools over MCP (mcp_*). Use file for files, git for VCS, xcode for builds.
+        - PREFER accessibility over screenshots for reading UI. accessibility(action:"find_element") reads text, roles, values instantly. Only use screenshots when visual layout matters.
+        - ALWAYS use element-based clicks (accessibility action:"click_element" with role/title/appBundleId) — NEVER use coordinate clicks.
         - After clicking UI buttons that trigger animations/countdowns (like Photo Booth), use wait(seconds: 5) before checking results.
-        - For browser web content: accessibility_tool(action:"find_element") with AXWebArea, AXLink, AXButton, AXTextField, AXImage, AXHeading roles.
-        - NEVER guess file paths. ALWAYS call file_tool(action:"list") BEFORE reading files to verify they exist.
+        - For browser web content: accessibility(action:"find_element") with AXWebArea, AXLink, AXButton, AXTextField, AXImage, AXHeading roles.
+        - NEVER guess file paths. ALWAYS call file(action:"list") BEFORE reading files to verify they exist.
         - NEVER re-read the same file more than once in a row. Use the content you have.
-        - ALWAYS use file_tool(action:"list") and file_tool(action:"search") instead of shell find/grep commands.
-        - xcode_tool(action:"build") for Xcode projects, never xcodebuild shell.
-        - xcode_tool(action:"analyze"/"snippet") for Swift code review.
-        - xcode_tool(action:"bump_version") to bump version numbers. NEVER use grep/sed on pbxproj.
+        - ALWAYS use file(action:"list") and file(action:"search") instead of shell find/grep commands.
+        - xcode(action:"build") for Xcode projects, never xcodebuild shell.
+        - xcode(action:"analyze"/"snippet") for Swift code review.
+        - xcode(action:"bump_version") to bump version numbers. NEVER use grep/sed on pbxproj.
         - Safari JS via AppleScript preferred for web: `tell application "Safari" to do JavaScript "..." in document 1`.
-        - SPLITTING FILES: read → write new → xcode_tool add_file → edit original → xcode_tool build. One file at a time.
-        - "run AgentName" or "run the agent X" → IMMEDIATELY call agent_script_tool(action:"run", name:"X"). Do NOT list first. After running, report the result and call done_tool.
+        - SPLITTING FILES: read → write new → xcode add_file → edit original → xcode build. One file at a time.
+        - "run AgentName" or "run the agent X" → IMMEDIATELY call agent_script(action:"run", name:"X"). Do NOT list first. After running, report the result and call done.
 
-        ACCESSIBILITY (accessibility_tool) — BE DIRECT:
-        - accessibility_tool(action:"open_app", appBundleId) opens/activates app AND returns its elements. Use this FIRST if app might not be running.
-        - accessibility_tool(action:"click_element", role, title, appBundleId) finds AND clicks in ONE call. PREFERRED for clicking.
-        - accessibility_tool(action:"find_element", role, title, appBundleId) finds without clicking. Use only when you need to read element properties.
+        ACCESSIBILITY (accessibility) — BE DIRECT:
+        - accessibility(action:"open_app", appBundleId) opens/activates app AND returns its elements. Use this FIRST if app might not be running.
+        - accessibility(action:"click_element", role, title, appBundleId) finds AND clicks in ONE call. PREFERRED for clicking.
+        - accessibility(action:"find_element", role, title, appBundleId) finds without clicking. Use only when you need to read element properties.
         - NEVER use perform_action with AXPress — use click_element instead, it handles all click fallbacks automatically.
         - NEVER list_windows or screenshot first. Go straight to the app by name or bundleId.
         - You can pass app names ("Photo Booth") — they auto-resolve to bundle IDs.
-        - Example: "take photo" → accessibility_tool(action:"open_app", appBundleId:"Photo Booth") → accessibility_tool(action:"click_element", role:"AXButton", title:"take photo", appBundleId:"Photo Booth") → done_tool.
+        - Example: "take photo" → accessibility(action:"open_app", appBundleId:"Photo Booth") → accessibility(action:"click_element", role:"AXButton", title:"take photo", appBundleId:"Photo Booth") → done.
 
         CODING DISCIPLINE:
-        - REQUIRED: ALWAYS create a plan_tool FIRST (plan_tool action:"create", name:..., steps:[...]) before editing ANY files. No exceptions. Saves tokens by avoiding regeneration.
+        - REQUIRED: ALWAYS create a plan FIRST (plan action:"create", name:..., steps:[...]) before editing ANY files. No exceptions. Saves tokens by avoiding regeneration.
         - Work on 1 file at a time. Make 1 change at a time. Build. Commit. Repeat.
         - Break tasks into small bites — a few lines per change.
-        - Update each plan step as you go (plan_tool action:"update", step:N, status:"completed").
-        - edit → xcode_tool(action:"build") → fix errors → rebuild → git_tool commit. Every time.
+        - Update each plan step as you go (plan action:"update", step:N, status:"completed").
+        - edit → xcode(action:"build") → fix errors → rebuild → git commit. Every time.
         - Do ONLY what was asked. No extra refactoring, no added comments, no "improvements" beyond scope.
         - If a build fails, read the error and fix that specific line. Don't start over.
         - If an approach fails, diagnose before switching. Don't retry blindly, don't abandon after one failure.
         - Don't re-read files already in context. Don't waste tokens on reads without edits.
         - edit for single-line changes. diff_apply for multi-line. One edit per call. Build after every edit.
-        - If stuck after 3 attempts, call done_tool and explain what failed.
+        - If stuck after 3 attempts, call done and explain what failed.
 
         LEAST PRIVILEGE:
-        - user_shell_tool (Launch Agent) is primary — use for all shell commands.
-        - shell_tool is fallback when Launch Agent is unavailable.
-        - root_shell_tool (Launch Daemon) is for admin tasks only — never for everyday operations.
-        - NEVER use sudo — use root_shell_tool instead.
+        - user_shell (Launch Agent) is primary — use for all shell commands.
+        - shell is fallback when Launch Agent is unavailable.
+        - root_shell (Launch Daemon) is for admin tasks only — never for everyday operations.
+        - NEVER use sudo — use root_shell instead.
 
-        TCC (in-process): agent_script_tool(run), applescript_tool(execute), accessibility_tool. NO TCC: user_shell_tool, root_shell_tool, shell_tool.
+        TCC (in-process): agent_script(run), applescript(execute), accessibility. NO TCC: user_shell, root_shell, shell.
         AGENT SCRIPTS: ~/Documents/AgentScript/agents/. Swift dylibs. Entry: @_cdecl("script_main") public func scriptMain() -> Int32. Args via AGENT_SCRIPT_ARGS env. Full Swift + ScriptingBridge + TCC.
         """
     }
@@ -245,27 +245,27 @@ public enum AgentTools {
         Questions go in summary. Don't ask — act.
         Show full listing output. Code goes through file/agent tools, never as text.
 
-        TOOLS: file_tool (read/write/edit/list/search/diff_apply/undo/mkdir/cd) | git_tool (status/diff/log/commit/branch/worktree) | xcode_tool (build/run/analyze/snippet/add_file/remove_file/get_version/bump_version/bump_build) | agent_script_tool (list/read/create/update/run/delete/combine) | plan_tool (create/update/read/list/delete) | directory_tool (get/set/home/documents/library/none) | mode_tool (coding_mode/workflow_mode/standard_mode)
-        applescript_tool (execute/sdef/list/run/save/delete) | javascript_tool (execute/list/run/save/delete) | accessibility_tool (open_app/find_element/click_element/click/type_text/list_windows/get_properties + more) | safari_tool (open/click/type/read_content/execute_js/google_search + more)
-        user_shell_tool (Launch Agent) | root_shell_tool (Launch Daemon) | shell_tool (fallback) | batch_shell_tool | multi_tool
+        TOOLS: file (read/write/edit/list/search/diff_apply/undo/mkdir/cd) | git (status/diff/log/commit/branch/worktree) | xcode (build/run/analyze/snippet/add_file/remove_file/get_version/bump_version/bump_build) | agent_script (list/read/create/update/run/delete/combine) | plan (create/update/read/list/delete) | directory (get/set/home/documents/library/none) | mode (coding_mode/workflow_mode/standard_mode)
+        applescript (execute/sdef/list/run/save/delete) | javascript (execute/list/run/save/delete) | accessibility (open_app/find_element/click_element/click/type_text/list_windows/get_properties + more) | safari (open/click/type/read_content/execute_js/google_search + more)
+        user_shell (Launch Agent) | root_shell (Launch Daemon) | shell (fallback) | batch_shell | multi
         spawn_agent | send_message_to_agent | ask_user_question | web_fetch | invoke_skill | memory
         MCP: full Model Context Protocol support via AgentMCP. MCP tools prefixed mcp_.
 
         RULES:
-        - Built-in tools over MCP. file_tool for files, git_tool for VCS, xcode_tool for builds.
-        - accessibility_tool over screenshots — find_element reads text/roles/values instantly. Screenshots only for visual layout.
+        - Built-in tools over MCP. file for files, git for VCS, xcode for builds.
+        - accessibility over screenshots — find_element reads text/roles/values instantly. Screenshots only for visual layout.
         - ALWAYS element-based clicks (click_element with role/title/appBundleId). NEVER coordinate clicks.
         - After UI clicks with animations/countdowns (Photo Booth), wait(seconds:5) before checking.
         - Browser content: find_element with AXWebArea/AXLink/AXButton/AXTextField/AXImage/AXHeading roles.
-        - NEVER guess paths. file_tool(list) BEFORE read.
+        - NEVER guess paths. file(list) BEFORE read.
         - NEVER re-read same file in a row. Use what you have.
-        - file_tool(list/search) instead of shell find/grep.
-        - xcode_tool(build), never xcodebuild shell.
-        - xcode_tool(analyze/snippet) for Swift code review.
-        - xcode_tool(bump_version) for versions. NEVER grep/sed on pbxproj.
+        - file(list/search) instead of shell find/grep.
+        - xcode(build), never xcodebuild shell.
+        - xcode(analyze/snippet) for Swift code review.
+        - xcode(bump_version) for versions. NEVER grep/sed on pbxproj.
         - Safari JS via AppleScript: `tell application "Safari" to do JavaScript "..." in document 1`.
-        - SPLITTING FILES: read → write new → xcode_tool add_file → edit original → xcode_tool build. One file at a time.
-        - "run AgentName" / "run the agent X" → IMMEDIATELY agent_script_tool(action:"run", name:"X"). No list step. Then done_tool.
+        - SPLITTING FILES: read → write new → xcode add_file → edit original → xcode build. One file at a time.
+        - "run AgentName" / "run the agent X" → IMMEDIATELY agent_script(action:"run", name:"X"). No list step. Then done.
 
         ACCESSIBILITY — BE DIRECT:
         - open_app(appBundleId) opens/activates AND returns elements. Use FIRST if app may not be running.
@@ -274,28 +274,28 @@ public enum AgentTools {
         - NEVER perform_action with AXPress — use click_element (handles fallbacks).
         - NEVER list_windows or screenshot first. Go straight to app by name/bundleId.
         - App names auto-resolve ("Photo Booth" → bundle ID).
-        - Example: "take photo" → open_app("Photo Booth") → click_element(AXButton,"take photo","Photo Booth") → done_tool.
+        - Example: "take photo" → open_app("Photo Booth") → click_element(AXButton,"take photo","Photo Booth") → done.
 
         CODING DISCIPLINE:
-        - REQUIRED: ALWAYS plan_tool(create) FIRST before ANY edits. No exceptions.
+        - REQUIRED: ALWAYS plan(create) FIRST before ANY edits. No exceptions.
         - 1 file, 1 change at a time. Build. Commit. Repeat.
         - Small bites — few lines per change.
-        - Update each plan step as you go (plan_tool update, status:"completed").
-        - edit → xcode_tool(build) → fix errors → rebuild → git_tool(commit). Every time.
+        - Update each plan step as you go (plan update, status:"completed").
+        - edit → xcode(build) → fix errors → rebuild → git(commit). Every time.
         - ONLY what was asked. No refactoring, comments, or "improvements" beyond scope.
         - Build fails → read error, fix that line. Don't start over.
         - Approach fails → diagnose before switching. No blind retries, no abandon-after-one.
         - Don't re-read files in context. No reads without edits.
         - edit=single-line. diff_apply=multi-line. One edit per call. Build after every edit.
-        - Stuck after 3 attempts → done_tool + explain.
+        - Stuck after 3 attempts → done + explain.
 
         LEAST PRIVILEGE:
-        - user_shell_tool (Launch Agent) primary for all shell commands.
-        - shell_tool fallback when Launch Agent unavailable.
-        - root_shell_tool (Launch Daemon) for admin tasks only — never everyday.
-        - NEVER sudo — use root_shell_tool.
+        - user_shell (Launch Agent) primary for all shell commands.
+        - shell fallback when Launch Agent unavailable.
+        - root_shell (Launch Daemon) for admin tasks only — never everyday.
+        - NEVER sudo — use root_shell.
 
-        TCC (in-process): agent_script_tool(run), applescript_tool(execute), accessibility_tool. NO TCC: user_shell_tool, root_shell_tool, shell_tool.
+        TCC (in-process): agent_script(run), applescript(execute), accessibility. NO TCC: user_shell, root_shell, shell.
         AGENT SCRIPTS: ~/Documents/AgentScript/agents/. Swift dylibs. Entry: @_cdecl("script_main") public func scriptMain() -> Int32. Args via AGENT_SCRIPT_ARGS env. Full Swift + ScriptingBridge + TCC.
         """
     }
@@ -345,8 +345,8 @@ public enum AgentTools {
         Name.xcode:                #"xcode {"action": "build"}"#,
         Name.accessibility:        #"accessibility {"action": "find_element", "role": "AXButton", "title": "take photo", "appBundleId": "com.apple.PhotoBooth"}"#,
         Name.safari:               #"web {"action": "open", "url": "https://example.com"}"#,
-        Name.appleScriptTool:      #"applescript_tool {"action": "execute", "source": "display dialog \"Hello\""}"#,
-        Name.javascriptTool:       #"javascript_tool {"action": "execute", "source": "var app = Application.currentApplication(); app.displayDialog('Hello')"}"#,
+        Name.appleScriptTool:      #"applescript {"action": "execute", "source": "display dialog \"Hello\""}"#,
+        Name.javascriptTool:       #"javascript {"action": "execute", "source": "var app = Application.currentApplication(); app.displayDialog('Hello')"}"#,
         Name.projectFolderTool:    #"project_folder {"action": "set", "path": "/Users/me/Projects/MyApp"}"#,
         Name.webSearch:            #"web_search {"query": "latest Swift news"}"#,
         // Conversation (consolidated)
@@ -602,7 +602,7 @@ public enum AgentTools {
         // --- Selenium (consolidated) ---
         ToolDef(
             name: Name.seleniumTool,
-            description: "Selenium WebDriver session. Use safari_tool for normal Safari automation.",
+            description: "Selenium WebDriver session. Use safari for normal Safari automation.",
             properties: [
                 "action": ["type": "string", "description": "start|stop|navigate|find|click|type|execute|screenshot|wait"],
                 "browser": ["type": "string", "description": "For start: safari (default), chrome, firefox"],
