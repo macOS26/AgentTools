@@ -353,7 +353,7 @@ public enum AgentTools {
             name: Name.xcode,
             description: "Xcode: build/run, analyze/snippet for code review, get_version/bump_version/bump_build, add/remove files. bump_version also bumps build. Use delta:-1 to decrement.",
             properties: [
-                "action": ["type": "string", "description": "Action: build, run, list_projects, select_project, add_file, remove_file, grant_permission, analyze, snippet, or code_review"],
+                "action": ["type": "string", "description": "Action: build, run, list_projects, select_project, add_file, remove_file, grant_permission, analyze, snippet, code_review, get_version, bump_version, or bump_build"],
                 "project_path": ["type": "string", "description": "For build/run: path (auto-detected if empty)"],
                 "file_path": ["type": "string", "description": "For add_file/remove_file/analyze/snippet: path to source file"],
                 "number": ["type": "integer", "description": "For select_project: project number (1-based)"],
