@@ -122,7 +122,7 @@ public enum AgentTools {
         public static let webCloseWindow = "web_close_window"
         public static let webWaitForElement = "web_wait_for_element"
         // Selenium (consolidated CRUDL)
-        public static let seleniumTool = "sel"
+        public static let seleniumTool = "selenium_tool"
         // Legacy selenium names (handlers still work)
         public static let seleniumStart = "selenium_start"
         public static let seleniumStop = "selenium_stop"
