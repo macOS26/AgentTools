@@ -191,9 +191,10 @@ public enum AgentTools {
         - Example: "take photo" → accessibility_tool(action:"open_app", appBundleId:"Photo Booth") → accessibility_tool(action:"click_element", role:"AXButton", title:"take photo", appBundleId:"Photo Booth") → done_tool.
 
         CODING DISCIPLINE:
+        - REQUIRED: ALWAYS create a plan_tool FIRST (plan_tool action:"create", name:..., steps:[...]) before editing ANY files. No exceptions. Saves tokens by avoiding regeneration.
         - Work on 1 file at a time. Make 1 change at a time. Build. Commit. Repeat.
         - Break tasks into small bites — a few lines per change.
-        - REQUIRED: For tasks touching 3+ files, you MUST create a plan_tool first (plan_tool action:"create") before writing any code. Update each step as you go.
+        - Update each plan step as you go (plan_tool action:"update", step:N, status:"completed").
         - edit → xcode_tool(action:"build") → fix errors → rebuild → git_tool commit. Every time.
         - Do ONLY what was asked. No extra refactoring, no added comments, no "improvements" beyond scope.
         - If a build fails, read the error and fix that specific line. Don't start over.
@@ -274,9 +275,10 @@ public enum AgentTools {
         - Example: "take photo" → open_app("Photo Booth") → click_element(AXButton,"take photo","Photo Booth") → done_tool.
 
         CODING DISCIPLINE:
+        - REQUIRED: ALWAYS plan_tool(create) FIRST before ANY edits. No exceptions.
         - 1 file, 1 change at a time. Build. Commit. Repeat.
         - Small bites — few lines per change.
-        - REQUIRED: 3+ files = plan_tool(create) FIRST. Update each step as you go.
+        - Update each plan step as you go (plan_tool update, status:"completed").
         - edit → xcode_tool(build) → fix errors → rebuild → git_tool(commit). Every time.
         - ONLY what was asked. No refactoring, comments, or "improvements" beyond scope.
         - Build fails → read error, fix that line. Don't start over.
