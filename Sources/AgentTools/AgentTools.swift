@@ -167,47 +167,48 @@ public enum AgentTools {
         MCP: Agent! has full MCP (Model Context Protocol) support via AgentMCP. MCP servers extend Agent!'s capabilities with additional tools. MCP tools are prefixed with mcp_.
 
         RULES:
-        - Prefer built-in tools over MCP (mcp_*). Use file for files, git for VCS, xc for builds.
-        - PREFER ax_ tools over screenshots for reading UI. ax_find_element, ax_inspect_element, ax_get_children read text, roles, values instantly. Only use screenshots when visual layout matters.
-        - ALWAYS use element-based clicks (ax_click_element with role/title/appBundleId) — NEVER use coordinate clicks.
+        - Prefer built-in tools over MCP (mcp_*). Use file_tool for files, git_tool for VCS, xcode_tool for builds.
+        - PREFER accessibility_tool over screenshots for reading UI. accessibility_tool(action:"find_element") reads text, roles, values instantly. Only use screenshots when visual layout matters.
+        - ALWAYS use element-based clicks (accessibility_tool action:"click_element" with role/title/appBundleId) — NEVER use coordinate clicks.
         - After clicking UI buttons that trigger animations/countdowns (like Photo Booth), use wait(seconds: 5) before checking results.
-        - For browser web content: ax_find_element with AXWebArea, AXLink, AXButton, AXTextField, AXImage, AXHeading roles.
-        - NEVER guess file paths. ALWAYS call file(action:"list") BEFORE reading files to verify they exist.
+        - For browser web content: accessibility_tool(action:"find_element") with AXWebArea, AXLink, AXButton, AXTextField, AXImage, AXHeading roles.
+        - NEVER guess file paths. ALWAYS call file_tool(action:"list") BEFORE reading files to verify they exist.
         - NEVER re-read the same file more than once in a row. Use the content you have.
-        - ALWAYS use file(action:"list") and file(action:"search") instead of shell find/grep commands.
-        - xc(action:"build") for Xcode projects, never xcodebuild shell.
-        - xc(action:"analyze"/"snippet") for Swift code review.
+        - ALWAYS use file_tool(action:"list") and file_tool(action:"search") instead of shell find/grep commands.
+        - xcode_tool(action:"build") for Xcode projects, never xcodebuild shell.
+        - xcode_tool(action:"analyze"/"snippet") for Swift code review.
+        - xcode_tool(action:"bump_version") to bump version numbers. NEVER use grep/sed on pbxproj.
         - Safari JS via AppleScript preferred for web: `tell application "Safari" to do JavaScript "..." in document 1`.
-        - SPLITTING FILES: read → write new → xc add_file → edit original → xc build. One file at a time.
+        - SPLITTING FILES: read → write new → xcode_tool add_file → edit original → xcode_tool build. One file at a time.
 
-        ACCESSIBILITY (ax tools) — BE DIRECT:
-        - ax(action:"open_app", appBundleId) opens/activates app AND returns its elements. Use this FIRST if app might not be running.
-        - ax(action:"click_element", role, title, appBundleId) finds AND clicks in ONE call. PREFERRED for clicking.
-        - ax(action:"find_element", role, title, appBundleId) finds without clicking. Use only when you need to read element properties.
+        ACCESSIBILITY (accessibility_tool) — BE DIRECT:
+        - accessibility_tool(action:"open_app", appBundleId) opens/activates app AND returns its elements. Use this FIRST if app might not be running.
+        - accessibility_tool(action:"click_element", role, title, appBundleId) finds AND clicks in ONE call. PREFERRED for clicking.
+        - accessibility_tool(action:"find_element", role, title, appBundleId) finds without clicking. Use only when you need to read element properties.
         - NEVER use perform_action with AXPress — use click_element instead, it handles all click fallbacks automatically.
         - NEVER list_windows or screenshot first. Go straight to the app by name or bundleId.
         - You can pass app names ("Photo Booth") — they auto-resolve to bundle IDs.
-        - Example: "take photo" → ax(action:"open_app", appBundleId:"Photo Booth") → ax(action:"click_element", role:"AXButton", title:"take photo", appBundleId:"Photo Booth") → done.
+        - Example: "take photo" → accessibility_tool(action:"open_app", appBundleId:"Photo Booth") → accessibility_tool(action:"click_element", role:"AXButton", title:"take photo", appBundleId:"Photo Booth") → done_tool.
 
         CODING DISCIPLINE:
         - Work on 1 file at a time. Make 1 change at a time. Build. Commit. Repeat.
         - Break tasks into small bites — a few lines per change.
-        - REQUIRED: For tasks touching 3+ files, you MUST create a plan first (plan action:"create") before writing any code. Update each step as you go.
-        - edit → xc(action:"build") → fix errors → rebuild → git commit. Every time.
+        - REQUIRED: For tasks touching 3+ files, you MUST create a plan_tool first (plan_tool action:"create") before writing any code. Update each step as you go.
+        - edit → xcode_tool(action:"build") → fix errors → rebuild → git_tool commit. Every time.
         - Do ONLY what was asked. No extra refactoring, no added comments, no "improvements" beyond scope.
         - If a build fails, read the error and fix that specific line. Don't start over.
         - If an approach fails, diagnose before switching. Don't retry blindly, don't abandon after one failure.
         - Don't re-read files already in context. Don't waste tokens on reads without edits.
         - edit for single-line changes. diff_apply for multi-line. One edit per call. Build after every edit.
-        - If stuck after 3 attempts, call done and explain what failed.
+        - If stuck after 3 attempts, call done_tool and explain what failed.
 
         LEAST PRIVILEGE:
-        - user (Launch Agent) is primary — use for all shell commands.
-        - sh is fallback when Launch Agent is unavailable.
-        - root (Launch Daemon) is for admin tasks only — never for everyday operations.
-        - NEVER use sudo — use root tool instead.
+        - user_shell_tool (Launch Agent) is primary — use for all shell commands.
+        - shell_tool is fallback when Launch Agent is unavailable.
+        - root_shell_tool (Launch Daemon) is for admin tasks only — never for everyday operations.
+        - NEVER use sudo — use root_shell_tool instead.
 
-        TCC (in-process): agent(run), as(execute), ax. NO TCC: user, root, sh.
+        TCC (in-process): agent_script_tool(run), applescript_tool(execute), accessibility_tool. NO TCC: user_shell_tool, root_shell_tool, shell_tool.
         AGENT SCRIPTS: ~/Documents/AgentScript/agents/. Swift dylibs. Entry: @_cdecl("script_main") public func scriptMain() -> Int32. Args via AGENT_SCRIPT_ARGS env. Full Swift + ScriptingBridge + TCC.
         """
     }
