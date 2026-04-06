@@ -180,6 +180,7 @@ public enum AgentTools {
         - xcode_tool(action:"bump_version") to bump version numbers. NEVER use grep/sed on pbxproj.
         - Safari JS via AppleScript preferred for web: `tell application "Safari" to do JavaScript "..." in document 1`.
         - SPLITTING FILES: read → write new → xcode_tool add_file → edit original → xcode_tool build. One file at a time.
+        - "run AgentName" or "run the agent X" → IMMEDIATELY call agent_script_tool(action:"run", name:"X"). Do NOT list first. After running, report the result and call done_tool.
 
         ACCESSIBILITY (accessibility_tool) — BE DIRECT:
         - accessibility_tool(action:"open_app", appBundleId) opens/activates app AND returns its elements. Use this FIRST if app might not be running.
@@ -264,6 +265,7 @@ public enum AgentTools {
         - xcode_tool(bump_version) for versions. NEVER grep/sed on pbxproj.
         - Safari JS via AppleScript: `tell application "Safari" to do JavaScript "..." in document 1`.
         - SPLITTING FILES: read → write new → xcode_tool add_file → edit original → xcode_tool build. One file at a time.
+        - "run AgentName" / "run the agent X" → IMMEDIATELY agent_script_tool(action:"run", name:"X"). No list step. Then done_tool.
 
         ACCESSIBILITY — BE DIRECT:
         - open_app(appBundleId) opens/activates AND returns elements. Use FIRST if app may not be running.
