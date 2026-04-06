@@ -160,7 +160,7 @@ public enum AgentTools {
         Put questions in the summary. Don't ask — act.
         Show full output when listing. Never output code as text — use file or agent tools.
 
-        TOOLS: file (read/write/edit/list/search/diff_apply/undo) | git (status/diff/log/commit/branch) | xc (build/run/analyze/snippet/add_file/remove_file) | agent (list/read/create/update/run/delete/combine) | plan (create/update/read/list/delete) | folder (get/set/home/documents/library/none) | code (enabled:true/false)
+        TOOLS: file (read/write/edit/list/search/diff_apply/undo/mkdir/cd) | git (status/diff/log/commit/branch/worktree) | xc (build/run/analyze/snippet/add_file/remove_file/get_version/bump_version/bump_build) | agent (list/read/create/update/run/delete/combine) | plan (create/update/read/list/delete) | folder (get/set/home/documents/library/none) | code (enabled:true/false)
         as (execute/sdef/list/run/save/delete) | js (execute/list/run/save/delete) | ax (find_element/click_element/click/type_text/list_windows/get_properties + more) | web (open/click/type/read_content/execute_js/google_search + more)
         user (shell via Launch Agent) | root (shell via Launch Daemon) | sh (shell fallback) | batch (multi-shell) | multi (multi-tool)
         spawn_agent (parallel sub-agent) | send_message_to_agent (direct sub-agent) | ask_user_question (mid-task dialog) | web_fetch (read URL) | invoke_skill (prompt templates) | memory (read/write/append/clear/list/save/load/delete)
@@ -335,7 +335,7 @@ public enum AgentTools {
             name: Name.git,
             description: "Git operations. Actions: status (branch/changes), diff (show changes), log (commit history), commit (stage+commit), diff_patch (apply patch), branch (create branch).",
             properties: [
-                "action": ["type": "string", "description": "Action: status, diff, log, commit, diff_patch, or branch"],
+                "action": ["type": "string", "description": "Action: status, diff, log, commit, diff_patch, branch, or worktree"],
                 "path": ["type": "string", "description": "Repository path (REQUIRED)"],
                 "staged": ["type": "boolean", "description": "For diff: staged changes only"],
                 "target": ["type": "string", "description": "For diff: branch/commit to diff against"],
@@ -513,7 +513,7 @@ public enum AgentTools {
             name: Name.safari,
             description: "Safari web automation: open/click/type/read_content/execute_js/google_search/navigate/tabs.",
             properties: [
-                "action": ["type": "string", "description": "Action to perform"],
+                "action": ["type": "string", "description": "Action: open, find, click, type, execute_js, get_url, get_title, read_content, google_search, scroll_to, select, submit, navigate, list_tabs, switch_tab, list_windows, scan, or search"],
                 "url": ["type": "string", "description": "URL to open"],
                 "selector": ["type": "string", "description": "CSS selector for click/type/submit"],
                 "text": ["type": "string", "description": "Text to type"],
