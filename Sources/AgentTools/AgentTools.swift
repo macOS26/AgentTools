@@ -718,12 +718,18 @@ public enum AgentTools {
         }
     }
 
-    @MainActor public static func claudeFormat(isEnabled: (String) -> Bool, mcpTools: [MCPToolInfo] = [], compact: Bool = false) -> [[String: Any]] {
+    /// Strip `_tool` suffix for condensed mode (saves tokens after first turn).
+    public static func condenseName(_ name: String) -> String {
+        name.hasSuffix("_tool") ? String(name.dropLast(5)) : name
+    }
+
+    @MainActor public static func claudeFormat(isEnabled: (String) -> Bool, mcpTools: [MCPToolInfo] = [], compact: Bool = false, condensed: Bool = false) -> [[String: Any]] {
         var tools = (commonTools + webSearchTools + conversationTools)
             .filter { isEnabled($0.name) }
             .map { tool in
                 let props = compact ? compactProperties(tool.properties) : tool.properties
-                return claudeTool(name: tool.name, description: compact ? String(tool.description.prefix(60)) : tool.description,
+                let displayName = condensed ? condenseName(tool.name) : tool.name
+                return claudeTool(name: displayName, description: compact ? String(tool.description.prefix(60)) : tool.description,
                            properties: props, required: tool.required)
             }
         for tool in mcpTools {
@@ -827,13 +833,14 @@ public enum AgentTools {
 
     /// Provider-aware Ollama/OpenAI format — filters tools by per-provider preferences.
     /// When activeGroups is set, only tools in those groups are included.
-    @MainActor public static func ollamaTools(isEnabled: (String) -> Bool, mcpTools: [MCPToolInfo] = [], compact: Bool = false) -> [[String: Any]] {
+    @MainActor public static func ollamaTools(isEnabled: (String) -> Bool, mcpTools: [MCPToolInfo] = [], compact: Bool = false, condensed: Bool = false) -> [[String: Any]] {
         // All providers get web_search and conversation tools
         var tools = (commonTools + webSearchTools + conversationTools)
             .filter { isEnabled($0.name) }
             .map { tool in
                 let props = compact ? compactProperties(tool.properties) : tool.properties
-                return ollamaTool(name: tool.name, description: compact ? String(tool.description.prefix(60)) : tool.description,
+                let displayName = condensed ? condenseName(tool.name) : tool.name
+                return ollamaTool(name: displayName, description: compact ? String(tool.description.prefix(60)) : tool.description,
                            properties: props, required: tool.required)
             }
         for tool in mcpTools {
