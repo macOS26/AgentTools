@@ -163,7 +163,7 @@ public enum AgentTools {
         TOOLS: file (read/write/edit/list/search/diff_apply/undo/mkdir/cd) | git (status/diff/log/commit/branch/worktree) | xcode (build/run/analyze/snippet/add_file/remove_file/get_version/bump_version/bump_build) | agent_script (list/read/create/update/run/delete/combine) | plan (create/update/read/list/delete) | directory (get/set/home/documents/library/none) | mode (coding_mode/workflow_mode/standard_mode)
         applescript (execute/sdef/list/run/save/delete) | javascript (execute/list/run/save/delete) | accessibility (open_app/find_element/click_element/click/type_text/list_windows/get_properties + more) | safari (open/click/type/read_content/execute_js/google_search + more)
         user_shell (shell via Launch Agent) | root_shell (shell via Launch Daemon) | shell (shell fallback) | batch_shell (multi-shell) | multi (multi-tool)
-        spawn_agent (parallel sub-agent) | tell_agent (direct sub-agent) | ask_user_question (mid-task dialog) | web_fetch (read URL) | invoke_skill (prompt templates) | memory (read/write/append/clear/list/save/load/delete)
+        spawn_agent (parallel sub-agent) | tell_agent (direct sub-agent) | ask_user (mid-task dialog) | web_fetch (read URL) | invoke_skill (prompt templates) | memory (read/write/append/clear/list/save/load/delete)
         MCP: Agent! has full MCP (Model Context Protocol) support via AgentMCP. MCP servers extend Agent!'s capabilities with additional tools. MCP tools are prefixed with mcp_.
 
         RULES:
@@ -248,7 +248,7 @@ public enum AgentTools {
         TOOLS: file (read/write/edit/list/search/diff_apply/undo/mkdir/cd) | git (status/diff/log/commit/branch/worktree) | xcode (build/run/analyze/snippet/add_file/remove_file/get_version/bump_version/bump_build) | agent_script (list/read/create/update/run/delete/combine) | plan (create/update/read/list/delete) | directory (get/set/home/documents/library/none) | mode (coding_mode/workflow_mode/standard_mode)
         applescript (execute/sdef/list/run/save/delete) | javascript (execute/list/run/save/delete) | accessibility (open_app/find_element/click_element/click/type_text/list_windows/get_properties + more) | safari (open/click/type/read_content/execute_js/google_search + more)
         user_shell (Launch Agent) | root_shell (Launch Daemon) | shell (fallback) | batch_shell | multi
-        spawn_agent | tell_agent | ask_user_question | web_fetch | invoke_skill | memory
+        spawn_agent | tell_agent | ask_user | web_fetch | invoke_skill | memory
         MCP: full Model Context Protocol support via AgentMCP. MCP tools prefixed mcp_.
 
         RULES:
@@ -640,7 +640,7 @@ public enum AgentTools {
             required: ["to", "message"]
         ),
         ToolDef(
-            name: "ask_user_question",
+            name: "ask_user",
             description: "Mid-task user dialog. Waits up to 5min.",
             properties: [
                 "question": ["type": "string", "description": "Question"],
