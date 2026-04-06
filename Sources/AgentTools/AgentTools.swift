@@ -161,7 +161,7 @@ public enum AgentTools {
         Show full output when listing. Never output code as text — use file or agent tools.
 
         TOOLS: file_tool (read/write/edit/list/search/diff_apply/undo/mkdir/cd) | git_tool (status/diff/log/commit/branch/worktree) | xcode_tool (build/run/analyze/snippet/add_file/remove_file/get_version/bump_version/bump_build) | agent_script_tool (list/read/create/update/run/delete/combine) | plan_tool (create/update/read/list/delete) | directory_tool (get/set/home/documents/library/none) | mode_tool (coding_mode/workflow_mode/standard_mode)
-        applescript_tool (execute/sdef/list/run/save/delete) | javascript_tool (execute/list/run/save/delete) | accessibility_tool (find_element/click_element/click/type_text/list_windows/get_properties + more) | safari_tool (open/click/type/read_content/execute_js/google_search + more)
+        applescript_tool (execute/sdef/list/run/save/delete) | javascript_tool (execute/list/run/save/delete) | accessibility_tool (open_app/find_element/click_element/click/type_text/list_windows/get_properties + more) | safari_tool (open/click/type/read_content/execute_js/google_search + more)
         user_shell_tool (shell via Launch Agent) | root_shell_tool (shell via Launch Daemon) | shell_tool (shell fallback) | batch_shell_tool (multi-shell) | multi_tool (multi-tool)
         spawn_agent (parallel sub-agent) | send_message_to_agent (direct sub-agent) | ask_user_question (mid-task dialog) | web_fetch (read URL) | invoke_skill (prompt templates) | memory (read/write/append/clear/list/save/load/delete)
         MCP: Agent! has full MCP (Model Context Protocol) support via AgentMCP. MCP servers extend Agent!'s capabilities with additional tools. MCP tools are prefixed with mcp_.
@@ -221,6 +221,78 @@ public enum AgentTools {
         EFFICIENCY: Don't re-read files already in context. Read once, edit, build. If the build fails, read the error (not the whole file again) and fix that specific line.
         TOOLS: diff_apply for multi-line changes. edit for single-line. One edit per call. xc(action:"build") after every edit.
         COMPLETION: Call task_complete when done. If stuck after 3 tries, call task_complete and explain.
+        """
+    }
+
+    /// Condensed full system prompt — same rules and voice as systemPrompt(), fewer words.
+    /// Use for iterations 2+ to keep all guidance present without burning tokens. Switch back to
+    /// the full systemPrompt() if the LLM gets confused (broken record, repeated failures).
+    public static func condensedSystemPrompt(userName: String, userHome: String, projectFolder: String = "") -> String {
+        let folder = projectFolder.isEmpty ? userHome : projectFolder
+        let shell = ProcessInfo.processInfo.environment["SHELL"]?.components(separatedBy: "/").last ?? "zsh"
+        return """
+        You are Agent! — autonomous macOS agent. NOT powered by Claude/GPT/any AI — you ARE Agent!. NEVER say "powered by". User: "\(userName)", home: "\(userHome)". Project: \(folder). Shell: \(shell).
+        CRITICAL: Call done(summary:"...") as TOOL CALL when finished. ONLY do what user asked. Call done immediately when complete. NO unrelated actions. NO inventing work from history. Unsure → call done with question in summary.
+        BROKEN RECORD: NEVER repeat the same tool call. Each step MUST progress.
+        Anti-patterns — STOP if you catch yourself:
+        - Re-reading same file without edit → edit or move on.
+        - Re-building unchanged code → result won't change.
+        - Re-searching same pattern → use what you found.
+        - Re-trying rejected edit → try different approach.
+        Stuck → call done, explain. Don't loop.
+        Questions go in summary. Don't ask — act.
+        Show full listing output. Code goes through file/agent tools, never as text.
+
+        TOOLS: file_tool (read/write/edit/list/search/diff_apply/undo/mkdir/cd) | git_tool (status/diff/log/commit/branch/worktree) | xcode_tool (build/run/analyze/snippet/add_file/remove_file/get_version/bump_version/bump_build) | agent_script_tool (list/read/create/update/run/delete/combine) | plan_tool (create/update/read/list/delete) | directory_tool (get/set/home/documents/library/none) | mode_tool (coding_mode/workflow_mode/standard_mode)
+        applescript_tool (execute/sdef/list/run/save/delete) | javascript_tool (execute/list/run/save/delete) | accessibility_tool (open_app/find_element/click_element/click/type_text/list_windows/get_properties + more) | safari_tool (open/click/type/read_content/execute_js/google_search + more)
+        user_shell_tool (Launch Agent) | root_shell_tool (Launch Daemon) | shell_tool (fallback) | batch_shell_tool | multi_tool
+        spawn_agent | send_message_to_agent | ask_user_question | web_fetch | invoke_skill | memory
+        MCP: full Model Context Protocol support via AgentMCP. MCP tools prefixed mcp_.
+
+        RULES:
+        - Built-in tools over MCP. file_tool for files, git_tool for VCS, xcode_tool for builds.
+        - accessibility_tool over screenshots — find_element reads text/roles/values instantly. Screenshots only for visual layout.
+        - ALWAYS element-based clicks (click_element with role/title/appBundleId). NEVER coordinate clicks.
+        - After UI clicks with animations/countdowns (Photo Booth), wait(seconds:5) before checking.
+        - Browser content: find_element with AXWebArea/AXLink/AXButton/AXTextField/AXImage/AXHeading roles.
+        - NEVER guess paths. file_tool(list) BEFORE read.
+        - NEVER re-read same file in a row. Use what you have.
+        - file_tool(list/search) instead of shell find/grep.
+        - xcode_tool(build), never xcodebuild shell.
+        - xcode_tool(analyze/snippet) for Swift code review.
+        - xcode_tool(bump_version) for versions. NEVER grep/sed on pbxproj.
+        - Safari JS via AppleScript: `tell application "Safari" to do JavaScript "..." in document 1`.
+        - SPLITTING FILES: read → write new → xcode_tool add_file → edit original → xcode_tool build. One file at a time.
+
+        ACCESSIBILITY — BE DIRECT:
+        - open_app(appBundleId) opens/activates AND returns elements. Use FIRST if app may not be running.
+        - click_element(role,title,appBundleId) finds AND clicks in ONE call. PREFERRED for clicking.
+        - find_element(role,title,appBundleId) finds without clicking. Only when reading element properties.
+        - NEVER perform_action with AXPress — use click_element (handles fallbacks).
+        - NEVER list_windows or screenshot first. Go straight to app by name/bundleId.
+        - App names auto-resolve ("Photo Booth" → bundle ID).
+        - Example: "take photo" → open_app("Photo Booth") → click_element(AXButton,"take photo","Photo Booth") → done_tool.
+
+        CODING DISCIPLINE:
+        - 1 file, 1 change at a time. Build. Commit. Repeat.
+        - Small bites — few lines per change.
+        - REQUIRED: 3+ files = plan_tool(create) FIRST. Update each step as you go.
+        - edit → xcode_tool(build) → fix errors → rebuild → git_tool(commit). Every time.
+        - ONLY what was asked. No refactoring, comments, or "improvements" beyond scope.
+        - Build fails → read error, fix that line. Don't start over.
+        - Approach fails → diagnose before switching. No blind retries, no abandon-after-one.
+        - Don't re-read files in context. No reads without edits.
+        - edit=single-line. diff_apply=multi-line. One edit per call. Build after every edit.
+        - Stuck after 3 attempts → done_tool + explain.
+
+        LEAST PRIVILEGE:
+        - user_shell_tool (Launch Agent) primary for all shell commands.
+        - shell_tool fallback when Launch Agent unavailable.
+        - root_shell_tool (Launch Daemon) for admin tasks only — never everyday.
+        - NEVER sudo — use root_shell_tool.
+
+        TCC (in-process): agent_script_tool(run), applescript_tool(execute), accessibility_tool. NO TCC: user_shell_tool, root_shell_tool, shell_tool.
+        AGENT SCRIPTS: ~/Documents/AgentScript/agents/. Swift dylibs. Entry: @_cdecl("script_main") public func scriptMain() -> Int32. Args via AGENT_SCRIPT_ARGS env. Full Swift + ScriptingBridge + TCC.
         """
     }
 
@@ -305,9 +377,9 @@ public enum AgentTools {
         // --- File Manager (consolidated) ---
         ToolDef(
             name: Name.fileManager,
-            description: "File ops. edit=exact string replace. diff_apply=replace line range (PREFERRED for code). create=preview diff (returns diff_id). apply=commit diff by id. undo=revert last edit. Also: read/write/list/search/extract_function.",
+            description: "File ops. edit=replace string. diff_apply=replace line range (preferred for code). mkdir=create dir. cd=change project folder.",
             properties: [
-                "action": ["type": "string", "description": "Action: read, write, edit, create, apply, undo, diff_apply, list, search, read_dir, mkdir, cd, if_to_switch, or extract_function"],
+                "action": ["type": "string", "description": "read|write|edit|create|apply|undo|diff_apply|list|search|read_dir|mkdir|cd|if_to_switch|extract_function"],
                 "file_path": ["type": "string", "description": "File path (for read/write/edit/apply/undo/diff_apply)"],
                 "path": ["type": "string", "description": "Directory path (for list/search/read_dir)"],
                 "content": ["type": "string", "description": "For write: file content"],
@@ -334,9 +406,9 @@ public enum AgentTools {
         // --- Git (consolidated) ---
         ToolDef(
             name: Name.git,
-            description: "Git operations. Actions: status (branch/changes), diff (show changes), log (commit history), commit (stage+commit), diff_patch (apply patch), branch (create branch).",
+            description: "Git ops. status, diff, log, commit, diff_patch, branch, worktree.",
             properties: [
-                "action": ["type": "string", "description": "Action: status, diff, log, commit, diff_patch, branch, or worktree"],
+                "action": ["type": "string", "description": "status|diff|log|commit|diff_patch|branch|worktree"],
                 "path": ["type": "string", "description": "Repository path (REQUIRED)"],
                 "staged": ["type": "boolean", "description": "For diff: staged changes only"],
                 "target": ["type": "string", "description": "For diff: branch/commit to diff against"],
@@ -352,9 +424,9 @@ public enum AgentTools {
         // --- Xcode (consolidated) ---
         ToolDef(
             name: Name.xcode,
-            description: "Xcode: build/run, analyze/snippet for code review, get_version/bump_version/bump_build, add/remove files. bump_version also bumps build. Use delta:-1 to decrement.",
+            description: "Xcode build/run, code review, version bumps, add/remove files.",
             properties: [
-                "action": ["type": "string", "description": "Action: build, run, list_projects, select_project, add_file, remove_file, grant_permission, analyze, snippet, code_review, get_version, bump_version, or bump_build"],
+                "action": ["type": "string", "description": "build|run|list_projects|select_project|add_file|remove_file|grant_permission|analyze|snippet|code_review|get_version|bump_version|bump_build"],
                 "project_path": ["type": "string", "description": "For build/run: path (auto-detected if empty)"],
                 "file_path": ["type": "string", "description": "For add_file/remove_file/analyze/snippet: path to source file"],
                 "number": ["type": "integer", "description": "For select_project: project number (1-based)"],
@@ -368,69 +440,69 @@ public enum AgentTools {
         // --- Coding: Shell ---
         ToolDef(
             name: Name.executeAgentCommand,
-            description: "Shell command as current user. Use for git, ls, grep, find, homebrew, scripts. No TCC.",
+            description: "Shell as current user via Launch Agent. Primary shell tool.",
             properties: [
-                "command": ["type": "string", "description": "The bash command to execute as the current user"],
+                "command": ["type": "string", "description": "Bash command"],
             ],
             required: ["command"]
         ),
         ToolDef(
             name: Name.executeDaemonCommand,
-            description: "Shell command as ROOT via Launch Daemon — no sudo needed. Use instead of sudo for: system logs, disk ops, network debug, launchd, firewall, /System, /Library.",
+            description: "Shell as ROOT via Launch Daemon. Admin tasks only — no sudo.",
             properties: [
-                "command": ["type": "string", "description": "The bash command to execute as root"],
+                "command": ["type": "string", "description": "Bash command (runs as root)"],
             ],
             required: ["command"]
         ),
         ToolDef(
             name: Name.runShellScript,
-            description: "Shell command with automatic fallback to in-process when User Agent is off.",
+            description: "Shell fallback when Launch Agent is off.",
             properties: [
-                "command": ["type": "string", "description": "The bash command or shell script to execute"],
+                "command": ["type": "string", "description": "Bash command"],
             ],
             required: ["command"]
         ),
         ToolDef(
             name: Name.batchCommands,
-            description: "Run multiple shell commands in one call. Newline-separated. No round-trips.",
+            description: "Multiple shell commands in one call (newline-separated).",
             properties: [
-                "commands": ["type": "string", "description": "Commands separated by newlines. Each runs sequentially as the current user."],
+                "commands": ["type": "string", "description": "Newline-separated commands"],
             ],
             required: ["commands"]
         ),
         ToolDef(
             name: Name.batchTools,
-            description: "Run multiple tool calls in one batch with progress tracking. No round-trips.",
+            description: "Multiple tool calls in one batch.",
             properties: [
-                "description": ["type": "string", "description": "Brief description of this batch (shown as header in task list)"],
-                "tasks": ["type": "array", "description": "Array of tool calls. Each: {\"tool\": \"tool_name\", \"input\": {param: value}}", "items": ["type": "object"] as [String: Any]] as [String: Any],
+                "description": ["type": "string", "description": "Batch label"],
+                "tasks": ["type": "array", "description": "Array of {tool, input} objects", "items": ["type": "object"] as [String: Any]] as [String: Any],
             ],
             required: ["description", "tasks"]
         ),
         ToolDef(
             name: Name.taskComplete,
-            description: "Signal that the task has been completed. Always call this when done.",
+            description: "Signal task complete. Call when done.",
             properties: [
-                "summary": ["type": "string", "description": "Brief summary of what was accomplished"],
+                "summary": ["type": "string", "description": "Brief summary"],
             ],
             required: ["summary"]
         ),
         // --- Project Folder ---
         ToolDef(
             name: Name.projectFolderTool,
-            description: "Get or change the working directory for this tab. Actions: get (show current), set (change to path), home (~), documents (~/Documents), library (~/Library), none (clear).",
+            description: "Get or change the project folder for this tab.",
             properties: [
-                "action": ["type": "string", "description": "One of: get, set, home, documents, library, none"],
-                "path": ["type": "string", "description": "For set: absolute path to new project folder"],
+                "action": ["type": "string", "description": "get|set|home|documents|library|none|cd"],
+                "path": ["type": "string", "description": "For set/cd: absolute or relative path"],
             ],
             required: ["action"]
         ),
         // --- Mode Tool ---
         ToolDef(
             name: Name.codingMode,
-            description: "Switch tool mode. coding_mode=Core+Workflow+Coding+UserAgent. workflow_mode=Core+Workflow+Automation+UserAgent. standard_mode=all enabled tools.",
+            description: "Switch tool mode. coding=fewer tools, faster responses for code work. workflow=automation tools. standard=all tools.",
             properties: [
-                "action": ["type": "string", "description": "Action: coding_mode, workflow_mode, or standard_mode"],
+                "action": ["type": "string", "description": "coding_mode|workflow_mode|standard_mode"],
             ],
             required: ["action"]
         ),
@@ -438,9 +510,9 @@ public enum AgentTools {
         // --- Agent Scripts (consolidated) ---
         ToolDef(
             name: Name.agentScript,
-            description: "Swift automation scripts with TCC. Actions: list, read, create, update, run, delete, combine.",
+            description: "Swift dylibs (~/Documents/AgentScript/agents) with full TCC.",
             properties: [
-                "action": ["type": "string", "description": "Action: list, read, create, update, run, delete, or combine"],
+                "action": ["type": "string", "description": "list|read|create|update|run|delete|combine"],
                 "name": ["type": "string", "description": "Script name (for read/create/update/run/delete)"],
                 "content": ["type": "string", "description": "Swift source code (for create/update)"],
                 "arguments": ["type": "string", "description": "For run: string passed via AGENT_SCRIPT_ARGS env var"],
@@ -453,9 +525,9 @@ public enum AgentTools {
         // --- AppleScript (consolidated) ---
         ToolDef(
             name: Name.appleScriptTool,
-            description: "AppleScript with TCC. Actions: execute, lookup_sdef, list, run, save, delete.",
+            description: "AppleScript in-process with TCC.",
             properties: [
-                "action": ["type": "string", "description": "Action: execute, lookup_sdef, list, run, save, or delete"],
+                "action": ["type": "string", "description": "execute|lookup_sdef|list|run|save|delete"],
                 "name": ["type": "string", "description": "Script name (for run/save/delete)"],
                 "source": ["type": "string", "description": "AppleScript source code (for execute/save)"],
                 "bundle_id": ["type": "string", "description": "For lookup_sdef: app bundle ID (e.g. com.apple.Music). Use 'list' to see all SDEFs."],
@@ -466,9 +538,9 @@ public enum AgentTools {
         // --- JavaScript/JXA (consolidated) ---
         ToolDef(
             name: Name.javascriptTool,
-            description: "JavaScript for Automation (JXA) tool. Actions: execute (run inline JXA source), list (saved scripts), run (saved by name), save, delete.",
+            description: "JavaScript for Automation (JXA).",
             properties: [
-                "action": ["type": "string", "description": "Action: execute, list, run, save, or delete"],
+                "action": ["type": "string", "description": "execute|list|run|save|delete"],
                 "name": ["type": "string", "description": "Script name (for run/save/delete)"],
                 "source": ["type": "string", "description": "JXA source code (for execute/save)"],
             ],
@@ -477,9 +549,9 @@ public enum AgentTools {
         // --- Accessibility (consolidated) ---
         ToolDef(
             name: Name.accessibility,
-            description: "macOS Accessibility API for UI automation. Controls any app — click buttons, type text, read elements, manage windows, navigate menus, capture screenshots. For web pages in browsers, use ax_find_element with AXWebArea roles. Use consistent role/title/value selectors across calls.",
+            description: "macOS UI automation. Use open_app first, then click_element/find_element with role+title+appBundleId.",
             properties: [
-                "action": ["type": "string", "description": "Action: find_element (PREFERRED — use role/title/appBundleId), click_element, click, type_text, list_windows, inspect_element, get_properties, perform_action, scroll, press_key, screenshot, set_properties, get_focused_element, get_children, drag, wait (seconds)"],
+                "action": ["type": "string", "description": "open_app|find_element|click_element|click|type_text|type_into_element|list_windows|inspect_element|get_properties|perform_action|scroll|scroll_to_element|press_key|screenshot|set_properties|get_focused_element|get_children|drag|wait|highlight_element|manage_app|show_menu|click_menu_item|check_permission|request_permission"],
                 "role": ["type": "string", "description": "AX role (e.g. AXButton, AXTextField)"],
                 "title": ["type": "string", "description": "Title/name to match (partial)"],
                 "value": ["type": "string", "description": "Value to match (partial)"],
@@ -512,9 +584,9 @@ public enum AgentTools {
         // --- Web (consolidated) ---
         ToolDef(
             name: Name.safari,
-            description: "Safari web automation: open/click/type/read_content/execute_js/google_search/navigate/tabs.",
+            description: "Safari automation. Open URLs, click, type, read content, search, manage tabs/windows.",
             properties: [
-                "action": ["type": "string", "description": "Action: open, find, click, type, execute_js, get_url, get_title, read_content, google_search, scroll_to, select, submit, navigate, list_tabs, switch_tab, list_windows, scan, or search"],
+                "action": ["type": "string", "description": "open|find|click|type|execute_js|get_url|get_title|read_content|google_search|scroll_to|select|submit|navigate|list_tabs|switch_tab|list_windows|scan|search"],
                 "url": ["type": "string", "description": "URL to open"],
                 "selector": ["type": "string", "description": "CSS selector for click/type/submit"],
                 "text": ["type": "string", "description": "Text to type"],
@@ -526,9 +598,9 @@ public enum AgentTools {
         // --- Selenium (consolidated) ---
         ToolDef(
             name: Name.seleniumTool,
-            description: "Selenium WebDriver. Actions: start (new session), stop (end session), navigate (go to URL), find (element), click (element), type (text), execute (JS), screenshot, wait (for element).",
+            description: "Selenium WebDriver session. Use safari_tool for normal Safari automation.",
             properties: [
-                "action": ["type": "string", "description": "Action: start, stop, navigate, find, click, type, execute, screenshot, or wait"],
+                "action": ["type": "string", "description": "start|stop|navigate|find|click|type|execute|screenshot|wait"],
                 "browser": ["type": "string", "description": "For start: safari (default), chrome, firefox"],
                 "port": ["type": "integer", "description": "WebDriver port (default 7055)"],
                 "url": ["type": "string", "description": "For navigate: URL"],
@@ -545,50 +617,50 @@ public enum AgentTools {
         // --- Agent Tools (sub-agents, messaging, questions) ---
         ToolDef(
             name: "spawn_agent",
-            description: "Spawn an isolated sub-agent for parallel work. Returns immediately. Results arrive as <task-notification>. Max 3 concurrent.",
+            description: "Spawn isolated sub-agent. Max 3 concurrent.",
             properties: [
-                "name": ["type": "string", "description": "Agent name (for messaging)"],
-                "prompt": ["type": "string", "description": "Complete task description — agent can't see parent conversation"],
-                "tools": ["type": "string", "description": "Tool access: all, coding, automation, or comma-separated group names. Default: Core+Work+Code"],
+                "name": ["type": "string", "description": "Agent name"],
+                "prompt": ["type": "string", "description": "Complete task (agent has no parent context)"],
+                "tools": ["type": "string", "description": "all|coding|automation|<groups>"],
                 "max_iterations": ["type": "integer", "description": "Max LLM turns (default 15)"],
             ],
             required: ["prompt"]
         ),
         ToolDef(
             name: "send_message_to_agent",
-            description: "Send a message to a running sub-agent. Agent receives it as <message from coordinator> in its next turn.",
+            description: "Message a running sub-agent.",
             properties: [
-                "to": ["type": "string", "description": "Agent name or ID prefix"],
-                "message": ["type": "string", "description": "Message content — instructions, data, or follow-up work"],
+                "to": ["type": "string", "description": "Agent name or ID"],
+                "message": ["type": "string", "description": "Message content"],
             ],
             required: ["to", "message"]
         ),
         ToolDef(
             name: "ask_user_question",
-            description: "Ask the user a question mid-task without stopping. Shows a dialog and waits for answer (up to 5 min).",
+            description: "Mid-task user dialog. Waits up to 5min.",
             properties: [
-                "question": ["type": "string", "description": "The question to ask"],
+                "question": ["type": "string", "description": "Question"],
             ],
             required: ["question"]
         ),
         ToolDef(
             name: "web_fetch",
-            description: "Fetch content from a URL. Returns text with HTML stripped, capped at 8K chars.",
+            description: "Fetch URL, strip HTML, cap 8K chars.",
             properties: [
-                "url": ["type": "string", "description": "URL to fetch"],
+                "url": ["type": "string", "description": "URL"],
             ],
             required: ["url"]
         ),
         ToolDef(
             name: "invoke_skill",
-            description: "Invoke a reusable skill (prompt template). Actions: list, invoke (by name), save, delete.",
+            description: "Reusable prompt template.",
             properties: [
-                "action": ["type": "string", "description": "Action: list, invoke, save, delete"],
-                "name": ["type": "string", "description": "Skill name (for invoke/delete)"],
-                "id": ["type": "string", "description": "Skill ID (for save/delete)"],
-                "description": ["type": "string", "description": "For save: skill description"],
-                "when_to_use": ["type": "string", "description": "For save: when to invoke this skill"],
-                "content": ["type": "string", "description": "For save: prompt template content"],
+                "action": ["type": "string", "description": "list|invoke|save|delete"],
+                "name": ["type": "string", "description": "Skill name"],
+                "id": ["type": "string", "description": "Skill ID (save/delete)"],
+                "description": ["type": "string", "description": "save: skill description"],
+                "when_to_use": ["type": "string", "description": "save: when to invoke"],
+                "content": ["type": "string", "description": "save: prompt content"],
             ],
             required: ["action"]
         ),
@@ -778,9 +850,9 @@ public enum AgentTools {
     nonisolated(unsafe) public static let webSearchTools: [ToolDef] = [
         ToolDef(
             name: Name.webSearch, // Tavily web search — still uses web_search internally
-            description: "Search the web for current information. Returns relevant web page titles, URLs, and content snippets. Use when you need up-to-date information or facts you're unsure about.",
+            description: "Web search via Tavily.",
             properties: [
-                "query": ["type": "string", "description": "The search query"],
+                "query": ["type": "string", "description": "Search query"],
             ],
             required: ["query"]
         ),
@@ -791,41 +863,39 @@ public enum AgentTools {
         // --- Conversation (consolidated) ---
         ToolDef(
             name: Name.conversation,
-            description: "Conversation tools. Actions: write (generate prose), transform (reformat text), fix (correct spelling/grammar), about (describe Agent capabilities).",
+            description: "Write prose, transform text, fix spelling/grammar, describe Agent capabilities.",
             properties: [
-                "action": ["type": "string", "description": "Action: write, transform, fix, or about"],
-                "subject": ["type": "string", "description": "For write: topic to write about"],
-                "style": ["type": "string", "description": "For write: 'informative', 'creative', 'technical', 'casual', or 'formal' (default: 'informative')"],
-                "length": ["type": "string", "description": "For write: 'short' (~100 words), 'medium' (~300 words), 'long' (~600 words), or exact word count"],
-                "context": ["type": "string", "description": "For write: additional context or requirements"],
-                "text": ["type": "string", "description": "For transform/fix: the text to process"],
-                "transform": ["type": "string", "description": "For transform: 'grocery_list', 'todo_list', 'outline', 'summary', 'bullet_points', 'numbered_list', 'table', or 'qa'"],
-                "options": ["type": "string", "description": "For transform: additional options"],
-                "fixes": ["type": "string", "description": "For fix: 'all' (default), 'spelling', 'grammar', 'punctuation', or 'capitalization'"],
-                "preserve_style": ["type": "boolean", "description": "For fix: keep original tone (default: true)"],
-                "topic": ["type": "string", "description": "For about: 'tools', 'features', 'scripting', 'automation', 'coding', or 'all' (default: 'all')"],
-                "detail": ["type": "string", "description": "For about: 'brief', 'standard', or 'detailed' (default: 'standard')"],
+                "action": ["type": "string", "description": "write|transform|fix|about"],
+                "subject": ["type": "string", "description": "write: topic"],
+                "style": ["type": "string", "description": "write: informative|creative|technical|casual|formal"],
+                "length": ["type": "string", "description": "write: short|medium|long|<words>"],
+                "context": ["type": "string", "description": "write: extra context"],
+                "text": ["type": "string", "description": "transform/fix: input text"],
+                "transform": ["type": "string", "description": "transform: grocery_list|todo_list|outline|summary|bullet_points|numbered_list|table|qa"],
+                "fixes": ["type": "string", "description": "fix: all|spelling|grammar|punctuation|capitalization"],
+                "topic": ["type": "string", "description": "about: tools|features|scripting|automation|coding|all"],
+                "detail": ["type": "string", "description": "about: brief|standard|detailed"],
             ],
             required: ["action"]
         ),
         ToolDef(
             name: Name.planMode,
-            description: "Step-by-step plans with status tracking. Actions: create, update, read, list, delete.",
+            description: "Plans with status tracking. REQUIRED for tasks touching 3+ files.",
             properties: [
-                "action": ["type": "string", "description": "One of: create, update, read, list, delete"],
-                "name": ["type": "string", "description": "Plan name slug (e.g. 'code-review', 'refactor-auth'). Required for create/read/update/delete."],
-                "steps": ["type": "string", "description": "For create: newline-separated list of steps (e.g. 'Step 1\\nStep 2\\nStep 3')"],
-                "step": ["type": "integer", "description": "For update: zero-based step index (0 = first step)"],
-                "status": ["type": "string", "description": "For update: 'in_progress', 'completed', or 'failed'"],
+                "action": ["type": "string", "description": "create|update|read|list|delete"],
+                "name": ["type": "string", "description": "Plan name slug"],
+                "steps": ["type": "string", "description": "create: newline-separated steps"],
+                "step": ["type": "integer", "description": "update: zero-based step index"],
+                "status": ["type": "string", "description": "update: in_progress|completed|failed"],
             ],
             required: ["action"]
         ),
         ToolDef(
             name: "memory",
-            description: "Read/write persistent user preferences. Memory is shown at task start. Actions: read, write, append, clear. Users say 'remember X' → append.",
+            description: "Persistent user preferences. 'remember X' → append.",
             properties: [
-                "action": ["type": "string", "description": "One of: read, write, append, clear"],
-                "text": ["type": "string", "description": "For write/append: the text to store"],
+                "action": ["type": "string", "description": "read|write|append|clear"],
+                "text": ["type": "string", "description": "write/append: text"],
             ],
             required: ["action"]
         ),
