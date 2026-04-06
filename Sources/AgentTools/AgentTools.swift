@@ -306,7 +306,7 @@ public enum AgentTools {
             name: Name.fileManager,
             description: "File ops. edit=exact string replace. diff_apply=replace line range (PREFERRED for code). create=preview diff (returns diff_id). apply=commit diff by id. undo=revert last edit. Also: read/write/list/search/extract_function.",
             properties: [
-                "action": ["type": "string", "description": "Action: read, write, edit, create, apply, undo, diff_apply, list, search, read_dir, if_to_switch, or extract_function"],
+                "action": ["type": "string", "description": "Action: read, write, edit, create, apply, undo, diff_apply, list, search, read_dir, mkdir, cd, if_to_switch, or extract_function"],
                 "file_path": ["type": "string", "description": "File path (for read/write/edit/apply/undo/diff_apply)"],
                 "path": ["type": "string", "description": "Directory path (for list/search/read_dir)"],
                 "content": ["type": "string", "description": "For write: file content"],
