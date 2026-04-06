@@ -140,7 +140,7 @@ public enum AgentTools {
         public static let sendMessage = "msg"
         public static let planMode = "plan_tool"
         public static let projectFolderTool = "directory_tool"
-        public static let codingMode = "code_tool"
+        public static let codingMode = "mode_tool"
     }
 
     // MARK: - Full LLM System Prompt (Desktop: Claude, Ollama, OpenAI, etc.)
@@ -160,7 +160,7 @@ public enum AgentTools {
         Put questions in the summary. Don't ask — act.
         Show full output when listing. Never output code as text — use file or agent tools.
 
-        TOOLS: file_tool (read/write/edit/list/search/diff_apply/undo/mkdir/cd) | git_tool (status/diff/log/commit/branch/worktree) | xcode_tool (build/run/analyze/snippet/add_file/remove_file/get_version/bump_version/bump_build) | agent_script_tool (list/read/create/update/run/delete/combine) | plan_tool (create/update/read/list/delete) | directory_tool (get/set/home/documents/library/none) | code_tool (enabled:true/false)
+        TOOLS: file_tool (read/write/edit/list/search/diff_apply/undo/mkdir/cd) | git_tool (status/diff/log/commit/branch/worktree) | xcode_tool (build/run/analyze/snippet/add_file/remove_file/get_version/bump_version/bump_build) | agent_script_tool (list/read/create/update/run/delete/combine) | plan_tool (create/update/read/list/delete) | directory_tool (get/set/home/documents/library/none) | mode_tool (coding_mode/workflow_mode/standard_mode)
         applescript_tool (execute/sdef/list/run/save/delete) | javascript_tool (execute/list/run/save/delete) | accessibility_tool (find_element/click_element/click/type_text/list_windows/get_properties + more) | safari_tool (open/click/type/read_content/execute_js/google_search + more)
         user_shell_tool (shell via Launch Agent) | root_shell_tool (shell via Launch Daemon) | shell_tool (shell fallback) | batch_shell_tool (multi-shell) | multi_tool (multi-tool)
         spawn_agent (parallel sub-agent) | send_message_to_agent (direct sub-agent) | ask_user_question (mid-task dialog) | web_fetch (read URL) | invoke_skill (prompt templates) | memory (read/write/append/clear/list/save/load/delete)
@@ -425,14 +425,14 @@ public enum AgentTools {
             ],
             required: ["action"]
         ),
-        // --- Coding Mode ---
+        // --- Mode Tool ---
         ToolDef(
             name: Name.codingMode,
-            description: "Toggle coding mode on/off. When ON, only Core+Workflow+Coding+UserAgent tools are sent to the LLM — removes conversation, accessibility, automation, web, daemon tools for faster responses. Auto-enables after iteration 1 for coding tasks.",
+            description: "Switch tool mode. coding_mode=Core+Workflow+Coding+UserAgent. workflow_mode=Core+Workflow+Automation+UserAgent. standard_mode=all enabled tools.",
             properties: [
-                "enabled": ["type": "boolean", "description": "true to enable coding mode, false to disable and restore all tools"],
+                "action": ["type": "string", "description": "Action: coding_mode, workflow_mode, or standard_mode"],
             ],
-            required: ["enabled"]
+            required: ["action"]
         ),
         // --- Agent Scripts (reusable Swift scripts) ---
         // --- Agent Scripts (consolidated) ---
