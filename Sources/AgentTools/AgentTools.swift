@@ -163,7 +163,7 @@ public enum AgentTools {
         TOOLS: file (read/write/edit/list/search/diff_apply/undo/mkdir/cd) | git (status/diff/log/commit/branch/worktree) | xcode (build/run/analyze/snippet/add_file/remove_file/get_version/bump_version/bump_build) | agent_script (list/read/create/update/run/delete/combine) | plan (create/update/read/list/delete) | directory (get/set/home/documents/library/none) | mode (coding_mode/workflow_mode/standard_mode)
         applescript (execute/sdef/list/run/save/delete) | javascript (execute/list/run/save/delete) | accessibility (open_app/find_element/click_element/click/type_text/list_windows/get_properties + more) | safari (open/click/type/read_content/execute_js/google_search + more)
         user_shell (shell via Launch Agent) | root_shell (shell via Launch Daemon) | shell (shell fallback) | batch_shell (multi-shell) | multi (multi-tool)
-        spawn_agent (parallel sub-agent) | send_message_to_agent (direct sub-agent) | ask_user_question (mid-task dialog) | web_fetch (read URL) | invoke_skill (prompt templates) | memory (read/write/append/clear/list/save/load/delete)
+        spawn_agent (parallel sub-agent) | tell_agent (direct sub-agent) | ask_user_question (mid-task dialog) | web_fetch (read URL) | invoke_skill (prompt templates) | memory (read/write/append/clear/list/save/load/delete)
         MCP: Agent! has full MCP (Model Context Protocol) support via AgentMCP. MCP servers extend Agent!'s capabilities with additional tools. MCP tools are prefixed with mcp_.
 
         RULES:
@@ -248,7 +248,7 @@ public enum AgentTools {
         TOOLS: file (read/write/edit/list/search/diff_apply/undo/mkdir/cd) | git (status/diff/log/commit/branch/worktree) | xcode (build/run/analyze/snippet/add_file/remove_file/get_version/bump_version/bump_build) | agent_script (list/read/create/update/run/delete/combine) | plan (create/update/read/list/delete) | directory (get/set/home/documents/library/none) | mode (coding_mode/workflow_mode/standard_mode)
         applescript (execute/sdef/list/run/save/delete) | javascript (execute/list/run/save/delete) | accessibility (open_app/find_element/click_element/click/type_text/list_windows/get_properties + more) | safari (open/click/type/read_content/execute_js/google_search + more)
         user_shell (Launch Agent) | root_shell (Launch Daemon) | shell (fallback) | batch_shell | multi
-        spawn_agent | send_message_to_agent | ask_user_question | web_fetch | invoke_skill | memory
+        spawn_agent | tell_agent | ask_user_question | web_fetch | invoke_skill | memory
         MCP: full Model Context Protocol support via AgentMCP. MCP tools prefixed mcp_.
 
         RULES:
@@ -631,7 +631,7 @@ public enum AgentTools {
             required: ["prompt"]
         ),
         ToolDef(
-            name: "send_message_to_agent",
+            name: "tell_agent",
             description: "Message a running sub-agent.",
             properties: [
                 "to": ["type": "string", "description": "Agent name or ID"],
@@ -794,18 +794,12 @@ public enum AgentTools {
         }
     }
 
-    /// Strip `_tool` suffix for condensed mode (saves tokens after first turn).
-    public static func condenseName(_ name: String) -> String {
-        name.hasSuffix("_tool") ? String(name.dropLast(5)) : name
-    }
-
     @MainActor public static func claudeFormat(isEnabled: (String) -> Bool, mcpTools: [MCPToolInfo] = [], compact: Bool = false, condensed: Bool = false) -> [[String: Any]] {
         var tools = (commonTools + webSearchTools + conversationTools)
             .filter { isEnabled($0.name) }
             .map { tool in
                 let props = compact ? compactProperties(tool.properties) : tool.properties
-                let displayName = condensed ? condenseName(tool.name) : tool.name
-                return claudeTool(name: displayName, description: compact ? String(tool.description.prefix(60)) : tool.description,
+                return claudeTool(name: tool.name, description: compact ? String(tool.description.prefix(60)) : tool.description,
                            properties: props, required: tool.required)
             }
         for tool in mcpTools {
@@ -913,8 +907,7 @@ public enum AgentTools {
             .filter { isEnabled($0.name) }
             .map { tool in
                 let props = compact ? compactProperties(tool.properties) : tool.properties
-                let displayName = condensed ? condenseName(tool.name) : tool.name
-                return ollamaTool(name: displayName, description: compact ? String(tool.description.prefix(60)) : tool.description,
+                return ollamaTool(name: tool.name, description: compact ? String(tool.description.prefix(60)) : tool.description,
                            properties: props, required: tool.required)
             }
         for tool in mcpTools {
