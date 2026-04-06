@@ -794,7 +794,7 @@ public enum AgentTools {
         }
     }
 
-    @MainActor public static func claudeFormat(isEnabled: (String) -> Bool, mcpTools: [MCPToolInfo] = [], compact: Bool = false, condensed: Bool = false) -> [[String: Any]] {
+    @MainActor public static func claudeFormat(isEnabled: (String) -> Bool, mcpTools: [MCPToolInfo] = [], compact: Bool = false) -> [[String: Any]] {
         var tools = (commonTools + webSearchTools + conversationTools)
             .filter { isEnabled($0.name) }
             .map { tool in
@@ -901,7 +901,7 @@ public enum AgentTools {
 
     /// Provider-aware Ollama/OpenAI format — filters tools by per-provider preferences.
     /// When activeGroups is set, only tools in those groups are included.
-    @MainActor public static func ollamaTools(isEnabled: (String) -> Bool, mcpTools: [MCPToolInfo] = [], compact: Bool = false, condensed: Bool = false) -> [[String: Any]] {
+    @MainActor public static func ollamaTools(isEnabled: (String) -> Bool, mcpTools: [MCPToolInfo] = [], compact: Bool = false) -> [[String: Any]] {
         // All providers get web_search and conversation tools
         var tools = (commonTools + webSearchTools + conversationTools)
             .filter { isEnabled($0.name) }
