@@ -8,9 +8,9 @@ public enum AgentTools {
     // MARK: - Tool Name Constants (single source of truth)
     public enum Name {
         // File Manager (consolidated CRUDL)
-        public static let fileManager = "file"
+        public static let fileManager = "file_tool"
         // Git (consolidated CRUDL)
-        public static let git = "git"
+        public static let git = "git_tool"
         // Legacy git names (handlers still work)
         public static let gitStatus = "git_status"
         public static let gitDiff = "git_diff"
@@ -23,15 +23,15 @@ public enum AgentTools {
         public static let runOsascript = "run_osascript"
         public static let executeJavascript = "execute_javascript"
         // Shell Execution
-        public static let executeAgentCommand = "user"
-        public static let executeDaemonCommand = "root"
-        public static let batchCommands = "batch"
-        public static let batchTools = "multi"
-        public static let runShellScript = "sh"
+        public static let executeAgentCommand = "user_shell_tool"
+        public static let executeDaemonCommand = "root_shell_tool"
+        public static let batchCommands = "batch_shell_tool"
+        public static let batchTools = "multi_tool"
+        public static let runShellScript = "shell_tool"
         // Task
-        public static let taskComplete = "done"
+        public static let taskComplete = "done_tool"
         // Accessibility (consolidated)
-        public static let accessibility = "ax"
+        public static let accessibility = "accessibility_tool"
         // Legacy ax names (handlers still work)
         public static let axListWindows = "ax_list_windows"
         public static let axInspectElement = "ax_inspect_element"
@@ -63,7 +63,7 @@ public enum AgentTools {
         public static let axScrollToElement = "ax_scroll_to_element"
         public static let axReadFocused = "ax_read_focused"
         // Agent Script (consolidated CRUDL)
-        public static let agentScript = "agent"
+        public static let agentScript = "agent_script_tool"
         // Agent action names (expanded from consolidated "agent" tool)
         public static let listAgentScripts = "list_agents"
         public static let readAgentScript = "read_agent"
@@ -73,9 +73,9 @@ public enum AgentTools {
         public static let deleteAgentScript = "delete_agent"
         public static let combineAgentScripts = "combine_agents"
         // SDEF
-        public static let lookupSdef = "sdef"
+        public static let lookupSdef = "sdef_tool"
         // Xcode (consolidated CRUDL)
-        public static let xcode = "xc"
+        public static let xcode = "xcode_tool"
         // Legacy xcode names (handlers still work)
         public static let xcodeBuild = "xcode_build"
         public static let xcodeRun = "xcode_run"
@@ -83,23 +83,23 @@ public enum AgentTools {
         public static let xcodeSelectProject = "xcode_select_project"
         public static let xcodeGrantPermission = "xcode_grant_permission"
         // AppleScript (consolidated CRUDL)
-        public static let appleScriptTool = "as"
+        public static let appleScriptTool = "applescript_tool"
         // Legacy AppleScript names (handlers still work)
         public static let listAppleScripts = "list_apple_scripts"
         public static let runAppleScript = "run_apple_script"
         public static let saveAppleScript = "save_apple_script"
         public static let deleteAppleScript = "delete_apple_script"
         // JavaScript (consolidated CRUDL)
-        public static let javascriptTool = "js"
+        public static let javascriptTool = "javascript_tool"
         // Legacy JavaScript names (handlers still work)
         public static let listJavascript = "list_javascript"
         public static let runJavascript = "run_javascript"
         public static let saveJavascript = "save_javascript"
         public static let deleteJavascript = "delete_javascript"
         // Tool Discovery
-        public static let listNativeTools = "tools"
+        public static let listNativeTools = "list_tools_tool"
 // Safari (consolidated web automation)
-        public static let safari = "web"
+        public static let safari = "safari_tool"
         // Legacy web_ names (handlers still work)
         public static let safariOpen = "web_open"
         public static let safariFind = "web_find"
@@ -134,13 +134,13 @@ public enum AgentTools {
         public static let seleniumScreenshot = "selenium_screenshot"
         public static let seleniumWait = "selenium_wait"
         // Ollama-only
-        public static let webSearch = "search"
+        public static let webSearch = "search_tool"
         // Conversation (consolidated CRUDL)
-        public static let conversation = "chat"
+        public static let conversation = "chat_tool"
         public static let sendMessage = "msg"
-        public static let planMode = "plan"
-        public static let projectFolderTool = "dir"
-        public static let codingMode = "code"
+        public static let planMode = "plan_tool"
+        public static let projectFolderTool = "directory_tool"
+        public static let codingMode = "code_tool"
     }
 
     // MARK: - Full LLM System Prompt (Desktop: Claude, Ollama, OpenAI, etc.)
@@ -160,9 +160,9 @@ public enum AgentTools {
         Put questions in the summary. Don't ask — act.
         Show full output when listing. Never output code as text — use file or agent tools.
 
-        TOOLS: file (read/write/edit/list/search/diff_apply/undo/mkdir/cd) | git (status/diff/log/commit/branch/worktree) | xc (build/run/analyze/snippet/add_file/remove_file/get_version/bump_version/bump_build) | agent (list/read/create/update/run/delete/combine) | plan (create/update/read/list/delete) | folder (get/set/home/documents/library/none) | code (enabled:true/false)
-        as (execute/sdef/list/run/save/delete) | js (execute/list/run/save/delete) | ax (find_element/click_element/click/type_text/list_windows/get_properties + more) | web (open/click/type/read_content/execute_js/google_search + more)
-        user (shell via Launch Agent) | root (shell via Launch Daemon) | sh (shell fallback) | batch (multi-shell) | multi (multi-tool)
+        TOOLS: file_tool (read/write/edit/list/search/diff_apply/undo/mkdir/cd) | git_tool (status/diff/log/commit/branch/worktree) | xcode_tool (build/run/analyze/snippet/add_file/remove_file/get_version/bump_version/bump_build) | agent_script_tool (list/read/create/update/run/delete/combine) | plan_tool (create/update/read/list/delete) | directory_tool (get/set/home/documents/library/none) | code_tool (enabled:true/false)
+        applescript_tool (execute/sdef/list/run/save/delete) | javascript_tool (execute/list/run/save/delete) | accessibility_tool (find_element/click_element/click/type_text/list_windows/get_properties + more) | safari_tool (open/click/type/read_content/execute_js/google_search + more)
+        user_shell_tool (shell via Launch Agent) | root_shell_tool (shell via Launch Daemon) | shell_tool (shell fallback) | batch_shell_tool (multi-shell) | multi_tool (multi-tool)
         spawn_agent (parallel sub-agent) | send_message_to_agent (direct sub-agent) | ask_user_question (mid-task dialog) | web_fetch (read URL) | invoke_skill (prompt templates) | memory (read/write/append/clear/list/save/load/delete)
         MCP: Agent! has full MCP (Model Context Protocol) support via AgentMCP. MCP servers extend Agent!'s capabilities with additional tools. MCP tools are prefixed with mcp_.
 
