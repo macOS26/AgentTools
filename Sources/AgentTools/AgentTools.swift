@@ -883,7 +883,7 @@ public enum AgentTools {
                 "action": ["type": "string", "description": "create|update|read|list|delete"],
                 "name": ["type": "string", "description": "Plan name slug"],
                 "steps": ["type": "string", "description": "create: newline-separated steps"],
-                "step": ["type": "integer", "description": "update: zero-based step index"],
+                "step": ["type": "integer", "description": "update: 1-based step number (1 = first step)"],
                 "status": ["type": "string", "description": "update: in_progress|completed|failed"],
             ],
             required: ["action"]
