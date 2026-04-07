@@ -160,8 +160,8 @@ public enum AgentTools {
         Put questions in the summary. Don't ask — act.
         Show full output when listing. Never output code as text — use file or agent tools.
 
-        TOOLS: file (read/write/edit/list/search/diff_apply/undo/mkdir/cd) | git (status/diff/log/commit/branch/worktree) | xcode (build/run/analyze/snippet/add_file/remove_file/get_version/bump_version/bump_build) | agent_script (list/read/create/update/run/delete/combine) | plan (create/update/read/list/delete) | directory (get/set/home/documents/library/none) | mode (coding_mode/workflow_mode/standard_mode)
-        applescript (execute/sdef/list/run/save/delete) | javascript (execute/list/run/save/delete) | accessibility (open_app/find_element/click_element/click/type_text/list_windows/get_properties + more) | safari (open/click/type/read_content/execute_js/google_search + more)
+        TOOLS: file (read/write/edit/list/search/diff_apply/undo/mkdir/cd) | git (status/diff/log/commit/branch/worktree) | xcode (build/run/analyze/snippet/add_file/remove_file/get_version/bump_version/bump_build) | agent_script (list/read/create/update/run/delete/combine) | plan (create/update/read/list/delete) | directory (get/set/home/documents/library/none)
+        applescript (execute/sdef/list/run/save/delete) | javascript (execute/list/run/save/delete) | accessibility (open_app/find_element/click_element/type_into_element/scroll_to_element/manage_app + more — element-based AXorcist only) | safari (open/click/type/read_content/execute_js/google_search + more)
         user_shell (shell via Launch Agent) | root_shell (shell via Launch Daemon) | shell (shell fallback) | batch (multi-shell) | multi (multi-tool)
         spawn_agent (parallel sub-agent) | tell_agent (direct sub-agent) | ask_user (mid-task dialog) | fetch (read URL) | skill (prompt templates) | memory (read/write/append/clear/list/save/load/delete)
         MCP: Agent! has full MCP (Model Context Protocol) support via AgentMCP. MCP servers extend Agent!'s capabilities with additional tools. MCP tools are prefixed with mcp_.
@@ -169,9 +169,9 @@ public enum AgentTools {
         RULES:
         - Prefer built-in tools over MCP (mcp_*). Use file for files, git for VCS, xcode for builds.
         - PREFER accessibility over screenshots for reading UI. accessibility(action:"find_element") reads text, roles, values instantly. Only use screenshots when visual layout matters.
-        - ALWAYS use element-based clicks (accessibility action:"click_element" with role/title/appBundleId) — NEVER use coordinate clicks.
-        - After clicking UI buttons that trigger animations/countdowns (like Photo Booth), use wait(seconds: 5) before checking results.
-        - For browser web content: accessibility(action:"find_element") with AXWebArea, AXLink, AXButton, AXTextField, AXImage, AXHeading roles.
+        - ALL accessibility actions are element-based. There is NO click(x,y), no type_text-at-cursor, no press_key, no drag, no scroll(x,y). Find the element by role+title+appBundleId and act on it. See ACCESSIBILITY section below.
+        - After clicking UI buttons that trigger animations/countdowns (Photo Booth, alerts), use wait_for_element on whatever should appear next — not a fixed sleep.
+        - For browser web content: accessibility(action:"find_element") with AXWebArea, AXLink, AXButton, AXTextField, AXImage, AXHeading roles inside the browser's appBundleId.
         - NEVER guess file paths. ALWAYS call file(action:"list") BEFORE reading files to verify they exist.
         - NEVER re-read the same file more than once in a row. Use the content you have.
         - ALWAYS use file(action:"list") and file(action:"search") instead of shell find/grep commands.
@@ -182,17 +182,37 @@ public enum AgentTools {
         - SPLITTING FILES: read → write new → xcode add_file → edit original → xcode build. One file at a time.
         - "run AgentName" or "run the agent X" → IMMEDIATELY call agent_script(action:"run", name:"X"). Do NOT list first. After running, report the result and call done.
 
-        ACCESSIBILITY (accessibility) — BE DIRECT:
-        - accessibility(action:"open_app", appBundleId) opens/activates app AND returns its elements. Use this FIRST if app might not be running.
-        - accessibility(action:"click_element", role, title, appBundleId) finds AND clicks in ONE call. PREFERRED for clicking.
-        - accessibility(action:"find_element", role, title, appBundleId) finds without clicking. Use only when you need to read element properties.
-        - NEVER use perform_action with AXPress — use click_element instead, it handles all click fallbacks automatically.
-        - NEVER list_windows or screenshot first. Go straight to the app by name or bundleId.
-        - You can pass app names ("Photo Booth") — they auto-resolve to bundle IDs.
-        - Example: "take photo" → accessibility(action:"open_app", appBundleId:"Photo Booth") → accessibility(action:"click_element", role:"AXButton", title:"take photo", appBundleId:"Photo Booth") → done.
+        ACCESSIBILITY (accessibility) — ELEMENT-BASED ONLY:
+        Every accessibility action takes role/title/value/appBundleId. There are
+        NO coordinate-based actions. There is no click(x,y), no type_text-at-cursor,
+        no press_key, no drag(x1,y1,x2,y2), no scroll(x,y,delta). If you find
+        yourself wanting one of those, you're holding the tool wrong — find the
+        element first and act on it by name.
+
+        BUNDLE ID — REQUIRED FOR EVERY CALL:
+        - Pass appBundleId on every accessibility call. Common ones: com.apple.PhotoBooth, com.apple.Safari, com.apple.finder, com.apple.mail, com.apple.systempreferences.
+        - App names ("Photo Booth") auto-resolve when known. Bundle IDs (containing dots) pass through.
+        - If you don't know an app's bundle ID, call accessibility(action:"manage_app", sub_action:"list") FIRST. It returns every running app with its bundle ID. Then make the real call with the resolved bundle ID.
+
+        TYPICAL WORKFLOWS:
+        - Click a button: accessibility(action:"click_element", role:"AXButton", title:"Take Photo", appBundleId:"com.apple.PhotoBooth")
+        - Type into a field: accessibility(action:"type_into_element", role:"AXTextField", title:"Search", text:"hello", appBundleId:"com.apple.Safari")
+        - Open an app: accessibility(action:"open_app", appBundleId:"com.apple.Safari") — opens/activates AND returns elements in one call
+        - Read what's on screen: accessibility(action:"find_element", role:..., title:..., appBundleId:...) returns the element's full property dump
+        - Scroll until something is visible: accessibility(action:"scroll_to_element", role:..., title:..., appBundleId:...) walks the scroll area until the target appears
+        - Invoke a menu command (replaces keyboard shortcuts): accessibility(action:"click_menu_item", appBundleId:..., menuPath:"File > Save")
+        - Move/resize a window: accessibility(action:"set_window_frame", appBundleId:..., x:0, y:0, width:1280, height:800)
+        - List running apps with their bundle IDs: accessibility(action:"manage_app", sub_action:"list")
+
+        RULES:
+        - NEVER call perform_action with AXPress — use click_element, it handles every click variant.
+        - NEVER list_windows / screenshot just to figure out where to click. Go straight to find_element / click_element by role+title.
+        - For browser web content: find_element with AXWebArea, AXLink, AXButton, AXTextField, AXImage, AXHeading inside the browser's bundle ID.
+        - After clicking a button that triggers an animation/countdown (Photo Booth, alerts), wait_for_element on the element that should appear next instead of sleeping.
+        - Example: "take a photo" → accessibility(action:"open_app", appBundleId:"com.apple.PhotoBooth") → accessibility(action:"click_element", role:"AXButton", title:"Take Photo", appBundleId:"com.apple.PhotoBooth") → done.
 
         CODING DISCIPLINE:
-        - REQUIRED: ALWAYS create a plan FIRST (plan action:"create", name:..., steps:[...]) before editing ANY files. No exceptions. Saves tokens by avoiding regeneration.
+        - Plans are encouraged for multi-file refactors but never required. Use plan(action:"create", name:..., steps:[...]) at the START of complex tasks if you'd benefit from tracking progress; skip it for one-line fixes and single-file edits.
         - Work on 1 file at a time. Make 1 change at a time. Build. Commit. Repeat.
         - Break tasks into small bites — a few lines per change.
         - Update each plan step as you go (plan action:"update", step:N, status:"completed").
@@ -245,8 +265,8 @@ public enum AgentTools {
         Questions go in summary. Don't ask — act.
         Show full listing output. Code goes through file/agent tools, never as text.
 
-        TOOLS: file (read/write/edit/list/search/diff_apply/undo/mkdir/cd) | git (status/diff/log/commit/branch/worktree) | xcode (build/run/analyze/snippet/add_file/remove_file/get_version/bump_version/bump_build) | agent_script (list/read/create/update/run/delete/combine) | plan (create/update/read/list/delete) | directory (get/set/home/documents/library/none) | mode (coding_mode/workflow_mode/standard_mode)
-        applescript (execute/sdef/list/run/save/delete) | javascript (execute/list/run/save/delete) | accessibility (open_app/find_element/click_element/click/type_text/list_windows/get_properties + more) | safari (open/click/type/read_content/execute_js/google_search + more)
+        TOOLS: file (read/write/edit/list/search/diff_apply/undo/mkdir/cd) | git (status/diff/log/commit/branch/worktree) | xcode (build/run/analyze/snippet/add_file/remove_file/get_version/bump_version/bump_build) | agent_script (list/read/create/update/run/delete/combine) | plan (create/update/read/list/delete) | directory (get/set/home/documents/library/none)
+        applescript (execute/sdef/list/run/save/delete) | javascript (execute/list/run/save/delete) | accessibility (element-based AX automation: open_app/find_element/click_element/type_into_element/scroll_to_element/manage_app + more — NO coordinate actions) | safari (open/click/type/read_content/execute_js/google_search + more)
         user_shell (Launch Agent) | root_shell (Launch Daemon) | shell (fallback) | batch | multi
         spawn_agent | tell_agent | ask_user | fetch | skill | memory
         MCP: full Model Context Protocol support via AgentMCP. MCP tools prefixed mcp_.
@@ -254,9 +274,9 @@ public enum AgentTools {
         RULES:
         - Built-in tools over MCP. file for files, git for VCS, xcode for builds.
         - accessibility over screenshots — find_element reads text/roles/values instantly. Screenshots only for visual layout.
-        - ALWAYS element-based clicks (click_element with role/title/appBundleId). NEVER coordinate clicks.
-        - After UI clicks with animations/countdowns (Photo Booth), wait(seconds:5) before checking.
-        - Browser content: find_element with AXWebArea/AXLink/AXButton/AXTextField/AXImage/AXHeading roles.
+        - ALL accessibility actions are element-based. NO click(x,y), NO type_text-at-cursor, NO press_key, NO drag, NO scroll(x,y). Find element by role+title+appBundleId.
+        - After UI clicks with animations (Photo Booth), use wait_for_element on whatever should appear next, not a fixed sleep.
+        - Browser content: find_element with AXWebArea/AXLink/AXButton/AXTextField/AXImage/AXHeading roles inside the browser appBundleId.
         - NEVER guess paths. file(list) BEFORE read.
         - NEVER re-read same file in a row. Use what you have.
         - file(list/search) instead of shell find/grep.
@@ -267,17 +287,23 @@ public enum AgentTools {
         - SPLITTING FILES: read → write new → xcode add_file → edit original → xcode build. One file at a time.
         - "run AgentName" / "run the agent X" → IMMEDIATELY agent_script(action:"run", name:"X"). No list step. Then done.
 
-        ACCESSIBILITY — BE DIRECT:
-        - open_app(appBundleId) opens/activates AND returns elements. Use FIRST if app may not be running.
-        - click_element(role,title,appBundleId) finds AND clicks in ONE call. PREFERRED for clicking.
-        - find_element(role,title,appBundleId) finds without clicking. Only when reading element properties.
-        - NEVER perform_action with AXPress — use click_element (handles fallbacks).
-        - NEVER list_windows or screenshot first. Go straight to app by name/bundleId.
-        - App names auto-resolve ("Photo Booth" → bundle ID).
-        - Example: "take photo" → open_app("Photo Booth") → click_element(AXButton,"take photo","Photo Booth") → done.
+        ACCESSIBILITY — ELEMENT-BASED ONLY:
+        Every action takes role/title/value/appBundleId. NO coordinates anywhere.
+        BUNDLE ID: pass appBundleId on every call. If you don't know it, call manage_app(sub_action:"list") FIRST to see every running app + its bundle ID.
+        - open_app(appBundleId): opens/activates AND returns elements. Use FIRST if app may not be running.
+        - click_element(role,title,appBundleId): finds AND clicks in ONE call. PREFERRED for clicking.
+        - type_into_element(role,title,text,appBundleId): types into a text field by element identity (NOT at cursor).
+        - find_element(role,title,appBundleId): finds without clicking. Use when reading element properties.
+        - scroll_to_element(role,title,appBundleId): scrolls the AXScrollArea until the target appears.
+        - click_menu_item(appBundleId,menuPath:"File > Save"): replaces keyboard shortcuts.
+        - set_window_frame(appBundleId,x,y,width,height): replaces drag-to-move/resize.
+        - manage_app(sub_action:"launch|activate|hide|unhide|quit|list"): app lifecycle.
+        - NEVER perform_action with AXPress — use click_element.
+        - NEVER list_windows or screenshot first. Go straight to the app by name/bundleId.
+        - Example: "take photo" → open_app(appBundleId:"com.apple.PhotoBooth") → click_element(role:"AXButton",title:"Take Photo",appBundleId:"com.apple.PhotoBooth") → done.
 
         CODING DISCIPLINE:
-        - REQUIRED: ALWAYS plan(create) FIRST before ANY edits. No exceptions.
+        - Plans encouraged for multi-file refactors, never required. Use plan(create) at the START of complex tasks; skip for one-line fixes.
         - 1 file, 1 change at a time. Build. Commit. Repeat.
         - Small bites — few lines per change.
         - Update each plan step as you go (plan update, status:"completed").
@@ -502,14 +528,6 @@ public enum AgentTools {
             required: ["action"]
         ),
         // --- Mode Tool ---
-        ToolDef(
-            name: Name.codingMode,
-            description: "Switch tool mode. coding=fewer tools, faster responses for code work. workflow=automation tools. standard=all tools.",
-            properties: [
-                "action": ["type": "string", "description": "coding_mode|workflow_mode|standard_mode"],
-            ],
-            required: ["action"]
-        ),
         // --- Agent Scripts (reusable Swift scripts) ---
         // --- Agent Scripts (consolidated) ---
         ToolDef(
@@ -553,28 +571,28 @@ public enum AgentTools {
         // --- Accessibility (consolidated) ---
         ToolDef(
             name: Name.accessibility,
-            description: "macOS UI automation. Use open_app first, then click_element/find_element with role+title+appBundleId.",
+            description: "macOS UI automation via AXorcist. Element-based ONLY — every action takes role/title/value/appBundleId, never coordinates. If you don't know an app's bundle ID, call manage_app(action:list) first to see every running app with its bundle ID.",
             properties: [
-                "action": ["type": "string", "description": "open_app|find_element|click_element|click|type_text|type_into_element|list_windows|inspect_element|get_properties|perform_action|scroll|scroll_to_element|press_key|screenshot|set_properties|get_focused_element|get_children|drag|wait|highlight_element|manage_app|show_menu|click_menu_item|check_permission|request_permission"],
-                "role": ["type": "string", "description": "AX role (e.g. AXButton, AXTextField)"],
-                "title": ["type": "string", "description": "Title/name to match (partial)"],
+                "action": ["type": "string", "description": "open_app|find_element|click_element|type_into_element|scroll_to_element|list_windows|inspect_element|get_properties|perform_action|set_properties|get_focused_element|get_children|read_focused|wait_for_element|wait_adaptive|highlight_element|manage_app|show_menu|click_menu_item|set_window_frame|get_window_frame|screenshot|check_permission|request_permission|get_audit_log"],
+                "role": ["type": "string", "description": "AX role: AXButton, AXTextField, AXLink, AXMenuItem, AXCheckBox, AXRadioButton, AXSlider, AXScrollArea, AXWebArea, AXImage, AXHeading, AXStaticText, AXWindow"],
+                "title": ["type": "string", "description": "Title/name to match (partial, case-insensitive). Searches AXTitle + AXDescription + AXHelp."],
                 "value": ["type": "string", "description": "Value to match (partial)"],
-                "appBundleId": ["type": "string", "description": "App bundle ID to search within"],
-                "x": ["type": "number", "description": "Screen X coordinate"],
-                "y": ["type": "number", "description": "Screen Y coordinate"],
-                "text": ["type": "string", "description": "For type_text: text to type"],
-                "button": ["type": "string", "description": "For click: left/right/middle (default left)"],
-                "clicks": ["type": "integer", "description": "For click: 1 or 2 (default 1)"],
-                "keyCode": ["type": "integer", "description": "For press_key: macOS virtual key code"],
-                "modifiers": ["type": "array", "description": "For press_key: command/option/control/shift", "items": ["type": "string"]],
-                "width": ["type": "number", "description": "For screenshot: region width"],
-                "height": ["type": "number", "description": "For screenshot: region height"],
+                "appBundleId": ["type": "string", "description": "REQUIRED for most actions. Bundle ID like 'com.apple.PhotoBooth'. App names like 'Photo Booth' auto-resolve. If you don't know the bundle ID, call manage_app(action:list) first."],
+                "text": ["type": "string", "description": "For type_into_element: text to type into the element identified by role/title"],
                 "windowId": ["type": "integer", "description": "For screenshot/list_windows: window ID"],
                 "limit": ["type": "integer", "description": "For list_windows: max windows (default 50)"],
                 "ax_action": ["type": "string", "description": "For perform_action: AXPress, AXConfirm, AXActivate, AXCancel, AXShowMenu, AXDismiss, AXIncrement, AXDecrement, AXExpand, AXCollapse, AXOpen, AXRaise, AXZoom, AXMinimize, AXCopy, AXCut, AXPaste, AXSelect, AXSelectAll, AXScrollToVisible, AXScrollPageUp/Down/Left/Right, AXFocus, AXShowDefaultUI, AXShowAlternateUI, AXDelete, AXPick"],
-                "properties": ["type": "object", "description": "For set_properties: key-value pairs to set"],
-                "timeout": ["type": "number", "description": "For find_element: max seconds to wait (default 5)"],
-                "depth": ["type": "integer", "description": "For get_children: traversal depth (default 3)"],
+                "sub_action": ["type": "string", "description": "For manage_app: launch|activate|hide|unhide|quit|list. For clipboard: read|write|paste|copy_image."],
+                "menuPath": ["type": "string", "description": "For click_menu_item: 'File > Save', 'Edit > Copy', etc. (use ' > ' as separator)"],
+                "properties": ["type": "object", "description": "For set_properties: key-value pairs to set on the element"],
+                "timeout": ["type": "number", "description": "For find_element / wait_for_element: max seconds (default 5)"],
+                "pollInterval": ["type": "number", "description": "For wait_for_element: poll interval seconds (default 0.5)"],
+                "depth": ["type": "integer", "description": "For get_children / inspect_element: traversal depth (default 3)"],
+                "verify": ["type": "boolean", "description": "For click_element / type_into_element: verify the action took effect (default false for click, true for type)"],
+                "x": ["type": "number", "description": "For set_window_frame: window x position"],
+                "y": ["type": "number", "description": "For set_window_frame: window y position"],
+                "width": ["type": "number", "description": "For set_window_frame: window width"],
+                "height": ["type": "number", "description": "For set_window_frame: window height"],
             ],
             required: ["action"]
         ),
