@@ -25,7 +25,7 @@ public enum AgentTools {
         // Shell Execution
         public static let executeAgentCommand = "user_shell"
         public static let executeDaemonCommand = "root_shell"
-        public static let batchCommands = "batch_shell"
+        public static let batchCommands = "batch"
         public static let batchTools = "multi"
         public static let runShellScript = "shell"
         // Task
@@ -162,8 +162,8 @@ public enum AgentTools {
 
         TOOLS: file (read/write/edit/list/search/diff_apply/undo/mkdir/cd) | git (status/diff/log/commit/branch/worktree) | xcode (build/run/analyze/snippet/add_file/remove_file/get_version/bump_version/bump_build) | agent_script (list/read/create/update/run/delete/combine) | plan (create/update/read/list/delete) | directory (get/set/home/documents/library/none) | mode (coding_mode/workflow_mode/standard_mode)
         applescript (execute/sdef/list/run/save/delete) | javascript (execute/list/run/save/delete) | accessibility (open_app/find_element/click_element/click/type_text/list_windows/get_properties + more) | safari (open/click/type/read_content/execute_js/google_search + more)
-        user_shell (shell via Launch Agent) | root_shell (shell via Launch Daemon) | shell (shell fallback) | batch_shell (multi-shell) | multi (multi-tool)
-        spawn_agent (parallel sub-agent) | tell_agent (direct sub-agent) | ask_user (mid-task dialog) | web_fetch (read URL) | invoke_skill (prompt templates) | memory (read/write/append/clear/list/save/load/delete)
+        user_shell (shell via Launch Agent) | root_shell (shell via Launch Daemon) | shell (shell fallback) | batch (multi-shell) | multi (multi-tool)
+        spawn_agent (parallel sub-agent) | tell_agent (direct sub-agent) | ask_user (mid-task dialog) | fetch (read URL) | skill (prompt templates) | memory (read/write/append/clear/list/save/load/delete)
         MCP: Agent! has full MCP (Model Context Protocol) support via AgentMCP. MCP servers extend Agent!'s capabilities with additional tools. MCP tools are prefixed with mcp_.
 
         RULES:
@@ -247,8 +247,8 @@ public enum AgentTools {
 
         TOOLS: file (read/write/edit/list/search/diff_apply/undo/mkdir/cd) | git (status/diff/log/commit/branch/worktree) | xcode (build/run/analyze/snippet/add_file/remove_file/get_version/bump_version/bump_build) | agent_script (list/read/create/update/run/delete/combine) | plan (create/update/read/list/delete) | directory (get/set/home/documents/library/none) | mode (coding_mode/workflow_mode/standard_mode)
         applescript (execute/sdef/list/run/save/delete) | javascript (execute/list/run/save/delete) | accessibility (open_app/find_element/click_element/click/type_text/list_windows/get_properties + more) | safari (open/click/type/read_content/execute_js/google_search + more)
-        user_shell (Launch Agent) | root_shell (Launch Daemon) | shell (fallback) | batch_shell | multi
-        spawn_agent | tell_agent | ask_user | web_fetch | invoke_skill | memory
+        user_shell (Launch Agent) | root_shell (Launch Daemon) | shell (fallback) | batch | multi
+        spawn_agent | tell_agent | ask_user | fetch | skill | memory
         MCP: full Model Context Protocol support via AgentMCP. MCP tools prefixed mcp_.
 
         RULES:
@@ -331,7 +331,7 @@ public enum AgentTools {
     public static let toolExamples: [String: String] = [
         Name.executeAgentCommand:  #"execute_agent_command {"command": "ls -la"}"#,
         Name.executeDaemonCommand: #"execute_daemon_command {"command": "whoami"}"#,
-        Name.batchCommands:        #"batch_commands {"commands": "ls -la\ncat README.md\ngit status"}"#,
+        Name.batchCommands:        #"batch {"commands": "ls -la\ncat README.md\ngit status"}"#,
         Name.batchTools:           #"batch_tools {"description": "Read project files", "tasks": [{"tool": "file_manager", "input": {"action": "read", "file_path": "/path/a.swift"}}, {"tool": "file_manager", "input": {"action": "search", "pattern": "TODO", "path": "/path"}}]}"#,
         Name.runShellScript:       #"run_shell_script {"command": "ls -la"}"#,
         Name.runApplescript:       #"run_applescript {"source": "tell application \"Finder\" to get name of home"}"#,
@@ -648,7 +648,7 @@ public enum AgentTools {
             required: ["question"]
         ),
         ToolDef(
-            name: "web_fetch",
+            name: "fetch",
             description: "Fetch URL, strip HTML, cap 8K chars.",
             properties: [
                 "url": ["type": "string", "description": "URL"],
@@ -656,7 +656,7 @@ public enum AgentTools {
             required: ["url"]
         ),
         ToolDef(
-            name: "invoke_skill",
+            name: "skill",
             description: "Reusable prompt template.",
             properties: [
                 "action": ["type": "string", "description": "list|invoke|save|delete"],
