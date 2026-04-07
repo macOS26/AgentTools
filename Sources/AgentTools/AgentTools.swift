@@ -216,7 +216,7 @@ public enum AgentTools {
         - Work on 1 file at a time. Make 1 change at a time. Build. Commit. Repeat.
         - Break tasks into small bites — a few lines per change.
         - Update each plan step as you go (plan action:"update", step:N, status:"completed").
-        - edit → xcode(action:"build") → fix errors → rebuild → git commit. Every time.
+        - SMALL EDIT → xcode(action:"build") → if build succeeds, git commit → repeat. Tiny commits, one file at a time. Do NOT batch edits across multiple files before building. Do NOT skip the commit.
         - Do ONLY what was asked. No extra refactoring, no added comments, no "improvements" beyond scope.
         - If a build fails, read the error and fix that specific line. Don't start over.
         - If an approach fails, diagnose before switching. Don't retry blindly, don't abandon after one failure.
@@ -307,7 +307,7 @@ public enum AgentTools {
         - 1 file, 1 change at a time. Build. Commit. Repeat.
         - Small bites — few lines per change.
         - Update each plan step as you go (plan update, status:"completed").
-        - edit → xcode(build) → fix errors → rebuild → git(commit). Every time.
+        - SMALL EDIT → xcode(build) → if build succeeds, git(commit) → repeat. Tiny commits, one file at a time. NO batching across files. NO skipping the commit.
         - ONLY what was asked. No refactoring, comments, or "improvements" beyond scope.
         - Build fails → read error, fix that line. Don't start over.
         - Approach fails → diagnose before switching. No blind retries, no abandon-after-one.
