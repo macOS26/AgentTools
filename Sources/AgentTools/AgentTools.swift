@@ -189,15 +189,15 @@ public enum AgentTools {
         yourself wanting one of those, you're holding the tool wrong — find the
         element first and act on it by name.
 
-        BUNDLE ID — REQUIRED FOR EVERY CALL:
-        - Pass appBundleId on every accessibility call. Common ones: com.apple.PhotoBooth, com.apple.Safari, com.apple.finder, com.apple.mail, com.apple.systempreferences.
-        - App names ("Photo Booth") auto-resolve when known. Bundle IDs (containing dots) pass through.
-        - If you don't know an app's bundle ID, call accessibility(action:"manage_app", sub_action:"list") FIRST. It returns every running app with its bundle ID. Then make the real call with the resolved bundle ID.
+        APP NAME RESOLUTION — pass either form in `appBundleId`:
+        - Natural name like "Photo Booth", "Safari", "TextEdit", "System Settings" — auto-resolved via the SDEF catalog and the macOS installed-apps scan.
+        - Real bundle ID like "com.apple.PhotoBooth" — passed through unchanged.
+        DO NOT memorize bundle IDs. The resolver knows about every .app bundle in /Applications, /System/Applications, ~/Applications, and every app with a scripting dictionary in the SDEF catalog. If you don't know an app's name, call accessibility(action:"manage_app", sub_action:"list") to enumerate running apps.
 
         TYPICAL WORKFLOWS:
-        - Click a button: accessibility(action:"click_element", role:"AXButton", title:"Take Photo", appBundleId:"com.apple.PhotoBooth")
-        - Type into a field: accessibility(action:"type_into_element", role:"AXTextField", title:"Search", text:"hello", appBundleId:"com.apple.Safari")
-        - Open an app: accessibility(action:"open_app", appBundleId:"com.apple.Safari") — opens/activates AND returns elements in one call
+        - Click a button: accessibility(action:"click_element", role:"AXButton", title:"Take Photo", appBundleId:"Photo Booth")
+        - Type into a field: accessibility(action:"type_into_element", role:"AXTextField", title:"Search", text:"hello", appBundleId:"Safari")
+        - Open an app: accessibility(action:"open_app", appBundleId:"Safari") — opens/activates AND returns elements in one call
         - Read what's on screen: accessibility(action:"find_element", role:..., title:..., appBundleId:...) returns the element's full property dump
         - Scroll until something is visible: accessibility(action:"scroll_to_element", role:..., title:..., appBundleId:...) walks the scroll area until the target appears
         - Invoke a menu command (replaces keyboard shortcuts): accessibility(action:"click_menu_item", appBundleId:..., menuPath:"File > Save")
@@ -207,9 +207,9 @@ public enum AgentTools {
         RULES:
         - NEVER call perform_action with AXPress — use click_element, it handles every click variant.
         - NEVER list_windows / screenshot just to figure out where to click. Go straight to find_element / click_element by role+title.
-        - For browser web content: find_element with AXWebArea, AXLink, AXButton, AXTextField, AXImage, AXHeading inside the browser's bundle ID.
+        - For browser web content: find_element with AXWebArea, AXLink, AXButton, AXTextField, AXImage, AXHeading inside the browser's appBundleId.
         - After clicking a button that triggers an animation/countdown (Photo Booth, alerts), wait_for_element on the element that should appear next instead of sleeping.
-        - Example: "take a photo" → accessibility(action:"open_app", appBundleId:"com.apple.PhotoBooth") → accessibility(action:"click_element", role:"AXButton", title:"Take Photo", appBundleId:"com.apple.PhotoBooth") → done.
+        - Example: "take a photo" → accessibility(action:"open_app", appBundleId:"Photo Booth") → accessibility(action:"click_element", role:"AXButton", title:"Take Photo", appBundleId:"Photo Booth") → done.
 
         CODING DISCIPLINE:
         - Plans are encouraged for multi-file refactors but never required. Use plan(action:"create", name:..., steps:[...]) at the START of complex tasks if you'd benefit from tracking progress; skip it for one-line fixes and single-file edits.
@@ -289,7 +289,7 @@ public enum AgentTools {
 
         ACCESSIBILITY — ELEMENT-BASED ONLY:
         Every action takes role/title/value/appBundleId. NO coordinates anywhere.
-        BUNDLE ID: pass appBundleId on every call. If you don't know it, call manage_app(sub_action:"list") FIRST to see every running app + its bundle ID.
+        APP NAME: pass either a natural name like "Photo Booth", "Safari", "TextEdit" OR a real bundle ID. The resolver auto-converts natural names via the SDEF catalog and the installed-apps scan. DO NOT memorize bundle IDs.
         - open_app(appBundleId): opens/activates AND returns elements. Use FIRST if app may not be running.
         - click_element(role,title,appBundleId): finds AND clicks in ONE call. PREFERRED for clicking.
         - type_into_element(role,title,text,appBundleId): types into a text field by element identity (NOT at cursor).
@@ -299,8 +299,8 @@ public enum AgentTools {
         - set_window_frame(appBundleId,x,y,width,height): replaces drag-to-move/resize.
         - manage_app(sub_action:"launch|activate|hide|unhide|quit|list"): app lifecycle.
         - NEVER perform_action with AXPress — use click_element.
-        - NEVER list_windows or screenshot first. Go straight to the app by name/bundleId.
-        - Example: "take photo" → open_app(appBundleId:"com.apple.PhotoBooth") → click_element(role:"AXButton",title:"Take Photo",appBundleId:"com.apple.PhotoBooth") → done.
+        - NEVER list_windows or screenshot first. Go straight to the app by name.
+        - Example: "take photo" → open_app(appBundleId:"Photo Booth") → click_element(role:"AXButton",title:"Take Photo",appBundleId:"Photo Booth") → done.
 
         CODING DISCIPLINE:
         - Plans encouraged for multi-file refactors, never required. Use plan(create) at the START of complex tasks; skip for one-line fixes.
