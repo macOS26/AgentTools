@@ -266,7 +266,7 @@ public enum AgentTools {
         - NEVER use sudo — use root_shell instead.
 
         TCC (in-process): agent_script(run), applescript(execute), accessibility. NO TCC: user_shell, root_shell, shell.
-        AGENT SCRIPTS: ~/Documents/AgentScript/agents/. Swift dylibs. Entry: @_cdecl("script_main") public func scriptMain() -> Int32. Args via AGENT_SCRIPT_ARGS env. Full Swift + ScriptingBridge + TCC.
+        AGENT SCRIPTS: ~/Documents/AgentScript/agents/. Swift dylibs. Entry: @_cdecl("script_main") public func scriptMain() -> Int32. Args via AGENT_SCRIPT_ARGS env. Full Swift + TCC. App automation inside an agent script: PREFER ScriptingBridge (`import ScriptingBridge`, typed Swift API, compile-time checked) — use SDEFs at ~/Documents/AgentScript/system/SDEFs/ to know the vocabulary. NSAppleScript is a perfectly valid fallback (`import Foundation`, `NSAppleScript(source:)?.executeAndReturnError(&err)`) for one-off tells, apps without a usable bridge header, or when the SDEF terms map awkwardly to Swift. Both run in-process with full TCC. Mix freely in the same script.
         """
     }
 
@@ -365,7 +365,7 @@ public enum AgentTools {
         - NEVER sudo — use root_shell.
 
         TCC (in-process): agent_script(run), applescript(execute), accessibility. NO TCC: user_shell, root_shell, shell.
-        AGENT SCRIPTS: ~/Documents/AgentScript/agents/. Swift dylibs. Entry: @_cdecl("script_main") public func scriptMain() -> Int32. Args via AGENT_SCRIPT_ARGS env. Full Swift + ScriptingBridge + TCC.
+        AGENT SCRIPTS: ~/Documents/AgentScript/agents/. Swift dylibs. Entry: @_cdecl("script_main") public func scriptMain() -> Int32. Args via AGENT_SCRIPT_ARGS env. Full Swift + TCC. App automation inside an agent script: PREFER ScriptingBridge (`import ScriptingBridge`, typed Swift API, compile-time checked) — use SDEFs at ~/Documents/AgentScript/system/SDEFs/ to know the vocabulary. NSAppleScript is a perfectly valid fallback (`import Foundation`, `NSAppleScript(source:)?.executeAndReturnError(&err)`) for one-off tells, apps without a usable bridge header, or when the SDEF terms map awkwardly to Swift. Both run in-process with full TCC. Mix freely in the same script.
         """
     }
 
