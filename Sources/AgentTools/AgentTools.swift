@@ -178,7 +178,8 @@ public enum AgentTools {
         - xcode(action:"build") for Xcode projects, never xcodebuild shell.
         - xcode(action:"analyze"/"snippet") for Swift code review.
         - xcode(action:"bump_version") to bump version numbers. NEVER use grep/sed on pbxproj.
-        - Safari JS via AppleScript preferred for web: `tell application "Safari" to do JavaScript "..." in document 1`.
+        - APPLESCRIPT WORKFLOW: ALWAYS call applescript(action:"lookup_sdef", bundle_id:"...") FIRST to read the target app's scripting dictionary, THEN applescript(action:"execute", source:"..."). NEVER guess AppleScript syntax — every app exposes different terms. See APPLESCRIPT section below.
+        - Safari JS via AppleScript preferred for web: `tell application "Safari" to do JavaScript "..." in document 1` (after looking up Safari's SDEF once).
         - SPLITTING FILES: read → write new → xcode add_file → edit original → xcode build. One file at a time.
         - "run AgentName" or "run the agent X" → IMMEDIATELY call agent_script(action:"run", name:"X"). Do NOT list first. After running, report the result and call done.
 
@@ -210,6 +211,40 @@ public enum AgentTools {
         - For browser web content: find_element with AXWebArea, AXLink, AXButton, AXTextField, AXImage, AXHeading inside the browser's appBundleId.
         - After clicking a button that triggers an animation/countdown (Photo Booth, alerts), wait_for_element on the element that should appear next instead of sleeping.
         - Example: "take a photo" → accessibility(action:"open_app", appBundleId:"Photo Booth") → accessibility(action:"click_element", role:"AXButton", title:"Take Photo", appBundleId:"Photo Booth") → done.
+
+        APPLESCRIPT (applescript) — SDEF FIRST, ALWAYS:
+        Every Mac app exposes its OWN AppleScript vocabulary. Pages doesn't speak the same as Music. System Events doesn't speak the same as Finder. Guessing fails 90% of the time and wastes a turn. The lookup_sdef action reads the actual scripting dictionary so you write code that compiles on the FIRST try.
+
+        CANONICAL WORKFLOW:
+        1. applescript(action:"lookup_sdef", bundle_id:"<bundle>") — returns commands, classes, properties for the whole app.
+        2. (optional) applescript(action:"lookup_sdef", bundle_id:"<bundle>", class_name:"<class>") — drill into a specific class to see its full property/element list.
+        3. applescript(action:"execute", source:"tell application \\"<App>\\" to ...") — run the script using ONLY the verified terms.
+
+        BUNDLE IDs FOR COMMON APPS (51+ bundled, use action:"lookup_sdef", bundle_id:"list" for full catalog):
+        - Music: com.apple.Music                    - Mail: com.apple.mail
+        - Pages: com.apple.iWork.Pages              - Numbers: com.apple.iWork.Numbers
+        - Keynote: com.apple.iWork.Keynote          - Safari: com.apple.Safari
+        - Finder: com.apple.finder                  - System Events: com.apple.systemevents
+        - Calendar: com.apple.iCal                  - Contacts: com.apple.AddressBook
+        - Photos: com.apple.Photos                  - Reminders: com.apple.reminders
+        - Notes: com.apple.Notes                    - TextEdit: com.apple.TextEdit
+        - Terminal: com.apple.Terminal              - iTerm: com.googlecode.iterm2
+        - Messages: com.apple.iChat                 - FaceTime: com.apple.FaceTime
+        - QuickTime Player: com.apple.QuickTimePlayerX
+
+        EXAMPLES:
+        - Play a Music track → lookup_sdef("com.apple.Music") → execute(`tell application "Music" to play track "Song Name"`).
+        - Insert text in Pages → lookup_sdef("com.apple.iWork.Pages") → lookup_sdef bundle_id="com.apple.iWork.Pages", class_name="document" → execute the verified script.
+        - Click a menu via System Events → lookup_sdef("com.apple.systemevents", class_name:"menu item") → execute. (Better: use accessibility(click_menu_item) instead — it skips AppleScript entirely.)
+        - Get Finder selection → lookup_sdef("com.apple.finder") → execute(`tell application "Finder" to get selection`).
+
+        WHEN APPLESCRIPT FAILS: a 📖 SDEF auto-injected block is appended to the error showing the exact dictionary. Read it. Rewrite your script using ONLY the documented terms. Don't retry the same broken syntax.
+
+        PREFER OTHER TOOLS WHEN POSSIBLE:
+        - UI clicks/menus/typing → accessibility (faster, no SDEF lookup needed).
+        - Web pages → safari tool or accessibility on AXWebArea.
+        - File operations → file tool, never `tell application "Finder" to ...`.
+        - Use AppleScript when the app's behavior is ONLY available via its scripting dictionary (Music playback, Mail compose, Pages document model, etc.).
 
         CODING DISCIPLINE:
         - Plans are encouraged for multi-file refactors but never required. Use plan(action:"create", name:..., steps:[...]) at the START of complex tasks if you'd benefit from tracking progress; skip it for one-line fixes and single-file edits.
@@ -283,7 +318,8 @@ public enum AgentTools {
         - xcode(build), never xcodebuild shell.
         - xcode(analyze/snippet) for Swift code review.
         - xcode(bump_version) for versions. NEVER grep/sed on pbxproj.
-        - Safari JS via AppleScript: `tell application "Safari" to do JavaScript "..." in document 1`.
+        - APPLESCRIPT: ALWAYS applescript(action:"lookup_sdef", bundle_id:"...") FIRST, THEN applescript(action:"execute"). Every app has unique terms — guessing fails. See APPLESCRIPT section below.
+        - Safari JS via AppleScript: `tell application "Safari" to do JavaScript "..." in document 1` (after one-time SDEF lookup).
         - SPLITTING FILES: read → write new → xcode add_file → edit original → xcode build. One file at a time.
         - "run AgentName" / "run the agent X" → IMMEDIATELY agent_script(action:"run", name:"X"). No list step. Then done.
 
@@ -301,6 +337,13 @@ public enum AgentTools {
         - NEVER perform_action with AXPress — use click_element.
         - NEVER list_windows or screenshot first. Go straight to the app by name.
         - Example: "take photo" → open_app(appBundleId:"Photo Booth") → click_element(role:"AXButton",title:"Take Photo",appBundleId:"Photo Booth") → done.
+
+        APPLESCRIPT — SDEF FIRST:
+        Every Mac app has its own AppleScript vocabulary. Guessing fails. lookup_sdef returns the dictionary so your script compiles first try.
+        WORKFLOW: lookup_sdef(bundle_id:"...") → (optional) lookup_sdef with class_name to drill in → execute(source:"tell application \\"X\\" to ...").
+        BUNDLES: com.apple.Music | com.apple.mail | com.apple.iWork.Pages | com.apple.iWork.Numbers | com.apple.iWork.Keynote | com.apple.Safari | com.apple.finder | com.apple.systemevents | com.apple.iCal | com.apple.AddressBook | com.apple.Photos | com.apple.Notes | com.apple.TextEdit | com.apple.Terminal | com.apple.iChat | com.apple.QuickTimePlayerX. Use bundle_id="list" for the full catalog.
+        FAILURE: a 📖 SDEF block is auto-injected on errors. Read it. Rewrite using ONLY documented terms.
+        PREFER: accessibility for UI clicks/menus. file tool for files. AppleScript only when behavior is exclusive to the app's dictionary (Music playback, Mail compose, Pages model).
 
         CODING DISCIPLINE:
         - Plans encouraged for multi-file refactors, never required. Use plan(create) at the START of complex tasks; skip for one-line fixes.
@@ -547,13 +590,13 @@ public enum AgentTools {
         // --- AppleScript (consolidated) ---
         ToolDef(
             name: Name.appleScriptTool,
-            description: "AppleScript in-process with TCC.",
+            description: "AppleScript automation. ALWAYS call action='lookup_sdef' for the target app FIRST to read its scripting dictionary, THEN action='execute' with verified commands. Guessing AppleScript syntax fails — every app exposes different terms. 51+ SDEFs bundled (Pages, Music, Mail, Safari, Finder, System Events, etc). Use bundle_id='list' to see catalog.",
             properties: [
-                "action": ["type": "string", "description": "execute|lookup_sdef|list|run|save|delete"],
+                "action": ["type": "string", "description": "execute|lookup_sdef|list|run|save|delete. Workflow: lookup_sdef → execute."],
                 "name": ["type": "string", "description": "Script name (for run/save/delete)"],
-                "source": ["type": "string", "description": "AppleScript source code (for execute/save)"],
-                "bundle_id": ["type": "string", "description": "For lookup_sdef: app bundle ID (e.g. com.apple.Music). Use 'list' to see all SDEFs."],
-                "class_name": ["type": "string", "description": "For lookup_sdef: specific class to inspect (e.g. 'track')"],
+                "source": ["type": "string", "description": "AppleScript source code (for execute/save). Must use ONLY commands/properties found via lookup_sdef."],
+                "bundle_id": ["type": "string", "description": "For lookup_sdef: app bundle ID (e.g. com.apple.Music, com.apple.systemevents, com.apple.Pages). Use 'list' to see all bundled SDEFs."],
+                "class_name": ["type": "string", "description": "For lookup_sdef: specific class to drill into (e.g. 'track', 'window', 'document') after seeing the app summary."],
             ],
             required: ["action"]
         ),
