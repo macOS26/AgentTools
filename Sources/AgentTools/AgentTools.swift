@@ -284,9 +284,15 @@ public enum AgentTools {
 
         TCC (in-process): agent_script(run), applescript(execute), accessibility. NO TCC: user_shell, root_shell, shell.
         AGENT SCRIPTS: ~/Documents/AgentScript/agents/. Swift dylibs. Entry: @_cdecl("script_main") public func scriptMain() -> Int32. Full Swift + TCC. App automation inside an agent script: PREFER ScriptingBridge (`import ScriptingBridge`, typed Swift API, compile-time checked) — use SDEFs at ~/Documents/AgentScript/system/SDEFs/ to know the vocabulary. NSAppleScript is a perfectly valid fallback (`import Foundation`, `NSAppleScript(source:)?.executeAndReturnError(&err)`) for one-off tells, apps without a usable bridge header, or when the SDEF terms map awkwardly to Swift. Both run in-process with full TCC. Mix freely in the same script.
-        AGENT SCRIPT ENV (always exported when a script runs):
-        - AGENT_PROJECT_FOLDER: ALWAYS set to the active tab's project folder (or $HOME if none). Use as the default cwd. The out-of-process runner also sets the script's process cwd to this — getcwd() / FileManager.default.currentDirectoryPath return the project folder too.
-        - AGENT_SCRIPT_ARGS: ONLY set when the LLM passed `arguments:"..."` via agent_script(action:"run"). Carries explicit args. Does NOT inherit from project folder. Read AGENT_PROJECT_FOLDER for cwd, AGENT_SCRIPT_ARGS for explicit args — they are independent, don't conflate them.
+        ENV CONTRACT (exported to agent_script runs AND to user_shell/root_shell/shell commands — uniform across all execution paths):
+        - AGENT_PROJECT_FOLDER: ALWAYS set to the active tab's project folder (or $HOME if none). The runner ALSO sets the process cwd to this folder — shell commands don't need to `cd` first, and Swift scripts see it via getcwd() / FileManager.default.currentDirectoryPath.
+        - AGENT_SCRIPT_ARGS: ONLY set when the LLM passed `arguments:"..."` via agent_script(action:"run"). Carries explicit args. The LLM does NOT set this env var directly — it passes `arguments:"--mode=fast --target /tmp"` to agent_script and the dispatcher exports the string. To pass data to a script, use the `arguments` parameter — never try to set env vars yourself.
+        - The two vars are INDEPENDENT. A script that wants the project folder reads AGENT_PROJECT_FOLDER — do NOT parse it out of AGENT_SCRIPT_ARGS.
+        READ PATTERNS:
+        - Bash/Zsh (user_shell/root_shell/shell): `ls "$AGENT_PROJECT_FOLDER/Sources"` — cwd is already set, no `cd` needed.
+        - Swift agent script: `let folder = ProcessInfo.processInfo.environment["AGENT_PROJECT_FOLDER"] ?? FileManager.default.currentDirectoryPath` / `let args = ProcessInfo.processInfo.environment["AGENT_SCRIPT_ARGS"] ?? ""`
+        - AppleScript: `do shell script "echo $AGENT_PROJECT_FOLDER"`
+        - JXA: `$.NSProcessInfo.processInfo.environment.objectForKey('AGENT_PROJECT_FOLDER').js`
         AGENT SCRIPT EDITS: prefer agent_script(action:"edit", name, old_string, new_string) over file(action:"edit") — it resolves the path internally so you never need to know the absolute path. agent_script(action:"delete") ALWAYS creates a `.Trash` backup (recoverable via action:"restore"). agent_script(action:"pull", name) fetches the upstream version from the AgentScripts GitHub repo when the user wants the *original* rather than a local backup. agent_script(action:"list_backups", name?) lists `.Trash` backups newest-first.
         """
     }
@@ -397,7 +403,7 @@ public enum AgentTools {
 
         TCC (in-process): agent_script(run), applescript(execute), accessibility. NO TCC: user_shell, root_shell, shell.
         AGENT SCRIPTS: ~/Documents/AgentScript/agents/. Swift dylibs. Entry: @_cdecl("script_main") public func scriptMain() -> Int32. Full Swift + TCC. App automation: PREFER ScriptingBridge (`import XBridge`, typed Swift), NSAppleScript fallback. SDEFs at ~/Documents/AgentScript/system/SDEFs/.
-        ENV: AGENT_PROJECT_FOLDER ALWAYS = active tab's project folder (or $HOME). Out-of-process runner sets script cwd to it too. AGENT_SCRIPT_ARGS ONLY set when LLM passed `arguments:"..."`. Use AGENT_PROJECT_FOLDER for cwd, AGENT_SCRIPT_ARGS for explicit args — independent, don't conflate.
+        ENV (exported to agent_script AND user_shell/root_shell/shell): AGENT_PROJECT_FOLDER ALWAYS = project folder (or $HOME); cwd is already set to it — no manual `cd`. AGENT_SCRIPT_ARGS ONLY set when LLM passed `arguments:"..."` to agent_script(run) — pass data via the `arguments` parameter, never set env vars directly. INDEPENDENT — don't parse project folder out of args. READ: sh `"$AGENT_PROJECT_FOLDER"` | Swift `ProcessInfo.processInfo.environment["AGENT_PROJECT_FOLDER"]` | AppleScript `do shell script "echo $AGENT_PROJECT_FOLDER"` | JXA `$.NSProcessInfo.processInfo.environment.objectForKey('AGENT_PROJECT_FOLDER').js`.
         EDITS: agent_script(edit, name, old_string, new_string) resolves path internally — prefer over file(edit) for agent scripts. delete ALWAYS makes a `.Trash` backup (recoverable via restore). pull(name) fetches upstream from the AgentScripts GitHub repo. list_backups(name?) lists backups newest-first.
         """
     }
@@ -629,9 +635,15 @@ public enum AgentTools {
                 - pull(name): Fetch the upstream version from the AgentScripts GitHub repo (single raw HTTP request, fast). Use when the user wants the *original* upstream version rather than a local backup that may contain edits. Refuses to overwrite a live script.
                 - list_backups(name?): List `.Trash` backups for one script (or all if name omitted), newest first. Format: `<name>-<yyyyMMdd-HHmmss>.swift`. Pick a name to pass to restore.
 
-                ENV CONTRACT (exported to every script run):
-                - AGENT_PROJECT_FOLDER: ALWAYS the active tab's project folder (or $HOME if none). Use as the default cwd. The out-of-process runner also sets the script's process cwd to this, so getcwd()/FileManager.default.currentDirectoryPath return it too.
-                - AGENT_SCRIPT_ARGS: Only set when the LLM passed `arguments:"..."`. Carries explicit args. Does NOT inherit from project folder. Read AGENT_PROJECT_FOLDER for cwd, AGENT_SCRIPT_ARGS for explicit args — they are independent, don't conflate them.
+                ENV CONTRACT (exported to every agent_script run AND to every user_shell/root_shell/shell command — uniform across all execution paths):
+                - AGENT_PROJECT_FOLDER: ALWAYS the active tab's project folder (or $HOME if none). The runner also sets the process cwd to this folder, so shell commands don't need to `cd` first and getcwd()/FileManager.default.currentDirectoryPath return it.
+                - AGENT_SCRIPT_ARGS: Only set when the LLM passed `arguments:"..."` to agent_script(action:"run"). Carries explicit args. The LLM does NOT set this env var directly — pass `arguments:"--mode=fast --target /tmp"` and the dispatcher exports it as AGENT_SCRIPT_ARGS. To pass data to a script, use the `arguments` parameter.
+                - The two are INDEPENDENT — don't parse the project folder out of AGENT_SCRIPT_ARGS.
+                READ PATTERNS:
+                - Swift agent script: `let folder = ProcessInfo.processInfo.environment["AGENT_PROJECT_FOLDER"] ?? FileManager.default.currentDirectoryPath` / `let args = ProcessInfo.processInfo.environment["AGENT_SCRIPT_ARGS"] ?? ""`
+                - Bash/Zsh: `ls "$AGENT_PROJECT_FOLDER/Sources"` (no `cd` needed, cwd is already set)
+                - AppleScript: `do shell script "echo $AGENT_PROJECT_FOLDER"`
+                - JXA: `$.NSProcessInfo.processInfo.environment.objectForKey('AGENT_PROJECT_FOLDER').js`
                 """,
             properties: [
                 "action": ["type": "string", "description": "list|read|create|update|edit|run|delete|combine|restore|pull|list_backups"],
