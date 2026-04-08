@@ -159,8 +159,8 @@ public enum AgentTools {
         Put questions in the summary. Don't ask — act.
         Show full output when listing. Never output code as text — use file or agent tools.
 
-        TOOLS: file (read/write/edit/list/search/diff_apply/undo/mkdir/cd) | git (status/diff/log/commit/branch/worktree) | xcode (build/run/analyze/snippet/add_file/remove_file/get_version/bump_version/bump_build) | agent_script (list/read/create/update/run/delete/combine) | plan (create/update/read/list/delete) | directory (get/set/home/documents/library/none)
-        applescript (execute/sdef/list/run/save/delete) | javascript (execute/list/run/save/delete) | accessibility (open_app/find_element/click_element/type_into_element/scroll_to_element/manage_app + more — element-based AXorcist only) | safari (open/click/type/read_content/execute_js/google_search + more)
+        TOOLS: file (read/write/edit/list/search/diff_apply/undo/mkdir/cd — read caps at 50K chars, files under 50K return in ONE call) | git (status/diff/log/commit/branch/worktree) | xcode (build/run/analyze/snippet/add_file/remove_file/get_version/bump_version/bump_build) | agent_script (list/read/create/update/edit/run/delete/combine/restore/pull/list_backups) | plan (create/update/read/list/delete) | directory (get/set/home/documents/library/none)
+        applescript (execute/sdef/list/run/save/delete + quit/open/launch/activate convenience) | javascript (execute/list/run/save/delete + quit/open/launch/activate convenience) | accessibility (open_app/find_element/click_element/type_into_element/scroll_to_element/manage_app + quit/open/launch/activate/hide/unhide convenience — element-based AXorcist only) | safari (open/click/type/read_content/execute_js/google_search + more)
         user_shell (shell via Launch Agent) | root_shell (shell via Launch Daemon) | shell (shell fallback) | batch (multi-shell) | multi (multi-tool)
         spawn_agent (parallel sub-agent) | tell_agent (direct sub-agent) | ask_user (mid-task dialog) | fetch (read URL) | skill (prompt templates) | memory (read/write/append/clear/list/save/load/delete)
         MCP: Agent! has full MCP (Model Context Protocol) support via AgentMCP. MCP servers extend Agent!'s capabilities with additional tools. MCP tools are prefixed with mcp_.
@@ -283,7 +283,11 @@ public enum AgentTools {
         Always narrow paths to the specific subdirectory you actually want to touch. Never delete a parent dir to reach a child — list, then target the specific child.
 
         TCC (in-process): agent_script(run), applescript(execute), accessibility. NO TCC: user_shell, root_shell, shell.
-        AGENT SCRIPTS: ~/Documents/AgentScript/agents/. Swift dylibs. Entry: @_cdecl("script_main") public func scriptMain() -> Int32. Args via AGENT_SCRIPT_ARGS env. Full Swift + TCC. App automation inside an agent script: PREFER ScriptingBridge (`import ScriptingBridge`, typed Swift API, compile-time checked) — use SDEFs at ~/Documents/AgentScript/system/SDEFs/ to know the vocabulary. NSAppleScript is a perfectly valid fallback (`import Foundation`, `NSAppleScript(source:)?.executeAndReturnError(&err)`) for one-off tells, apps without a usable bridge header, or when the SDEF terms map awkwardly to Swift. Both run in-process with full TCC. Mix freely in the same script.
+        AGENT SCRIPTS: ~/Documents/AgentScript/agents/. Swift dylibs. Entry: @_cdecl("script_main") public func scriptMain() -> Int32. Full Swift + TCC. App automation inside an agent script: PREFER ScriptingBridge (`import ScriptingBridge`, typed Swift API, compile-time checked) — use SDEFs at ~/Documents/AgentScript/system/SDEFs/ to know the vocabulary. NSAppleScript is a perfectly valid fallback (`import Foundation`, `NSAppleScript(source:)?.executeAndReturnError(&err)`) for one-off tells, apps without a usable bridge header, or when the SDEF terms map awkwardly to Swift. Both run in-process with full TCC. Mix freely in the same script.
+        AGENT SCRIPT ENV (always exported when a script runs):
+        - AGENT_PROJECT_FOLDER: ALWAYS set to the active tab's project folder (or $HOME if none). Use as the default cwd. The out-of-process runner also sets the script's process cwd to this — getcwd() / FileManager.default.currentDirectoryPath return the project folder too.
+        - AGENT_SCRIPT_ARGS: ONLY set when the LLM passed `arguments:"..."` via agent_script(action:"run"). Carries explicit args. Does NOT inherit from project folder. Read AGENT_PROJECT_FOLDER for cwd, AGENT_SCRIPT_ARGS for explicit args — they are independent, don't conflate them.
+        AGENT SCRIPT EDITS: prefer agent_script(action:"edit", name, old_string, new_string) over file(action:"edit") — it resolves the path internally so you never need to know the absolute path. agent_script(action:"delete") ALWAYS creates a `.Trash` backup (recoverable via action:"restore"). agent_script(action:"pull", name) fetches the upstream version from the AgentScripts GitHub repo when the user wants the *original* rather than a local backup. agent_script(action:"list_backups", name?) lists `.Trash` backups newest-first.
         """
     }
 
@@ -316,8 +320,8 @@ public enum AgentTools {
         Questions go in summary. Don't ask — act.
         Show full listing output. Code goes through file/agent tools, never as text.
 
-        TOOLS: file (read/write/edit/list/search/diff_apply/undo/mkdir/cd) | git (status/diff/log/commit/branch/worktree) | xcode (build/run/analyze/snippet/add_file/remove_file/get_version/bump_version/bump_build) | agent_script (list/read/create/update/run/delete/combine) | plan (create/update/read/list/delete) | directory (get/set/home/documents/library/none)
-        applescript (execute/sdef/list/run/save/delete) | javascript (execute/list/run/save/delete) | accessibility (element-based AX automation: open_app/find_element/click_element/type_into_element/scroll_to_element/manage_app + more — NO coordinate actions) | safari (open/click/type/read_content/execute_js/google_search + more)
+        TOOLS: file (read/write/edit/list/search/diff_apply/undo/mkdir/cd — read caps at 50K, files under 50K in ONE call) | git (status/diff/log/commit/branch/worktree) | xcode (build/run/analyze/snippet/add_file/remove_file/get_version/bump_version/bump_build) | agent_script (list/read/create/update/edit/run/delete/combine/restore/pull/list_backups) | plan (create/update/read/list/delete) | directory (get/set/home/documents/library/none)
+        applescript (execute/sdef/list/run/save/delete + quit/open/launch/activate convenience verbs) | javascript (execute/list/run/save/delete + quit/open/launch/activate convenience verbs) | accessibility (element-based AX: open_app/find_element/click_element/type_into_element/scroll_to_element/manage_app + quit/open/launch/activate/hide/unhide convenience — NO coordinate actions) | safari (open/click/type/read_content/execute_js/google_search + more)
         user_shell (Launch Agent) | root_shell (Launch Daemon) | shell (fallback) | batch | multi
         spawn_agent | tell_agent | ask_user | fetch | skill | memory
         MCP: full Model Context Protocol support via AgentMCP. MCP tools prefixed mcp_.
@@ -392,7 +396,9 @@ public enum AgentTools {
         Always narrow paths to the specific subdirectory you actually want to touch.
 
         TCC (in-process): agent_script(run), applescript(execute), accessibility. NO TCC: user_shell, root_shell, shell.
-        AGENT SCRIPTS: ~/Documents/AgentScript/agents/. Swift dylibs. Entry: @_cdecl("script_main") public func scriptMain() -> Int32. Args via AGENT_SCRIPT_ARGS env. Full Swift + TCC. App automation inside an agent script: PREFER ScriptingBridge (`import ScriptingBridge`, typed Swift API, compile-time checked) — use SDEFs at ~/Documents/AgentScript/system/SDEFs/ to know the vocabulary. NSAppleScript is a perfectly valid fallback (`import Foundation`, `NSAppleScript(source:)?.executeAndReturnError(&err)`) for one-off tells, apps without a usable bridge header, or when the SDEF terms map awkwardly to Swift. Both run in-process with full TCC. Mix freely in the same script.
+        AGENT SCRIPTS: ~/Documents/AgentScript/agents/. Swift dylibs. Entry: @_cdecl("script_main") public func scriptMain() -> Int32. Full Swift + TCC. App automation: PREFER ScriptingBridge (`import XBridge`, typed Swift), NSAppleScript fallback. SDEFs at ~/Documents/AgentScript/system/SDEFs/.
+        ENV: AGENT_PROJECT_FOLDER ALWAYS = active tab's project folder (or $HOME). Out-of-process runner sets script cwd to it too. AGENT_SCRIPT_ARGS ONLY set when LLM passed `arguments:"..."`. Use AGENT_PROJECT_FOLDER for cwd, AGENT_SCRIPT_ARGS for explicit args — independent, don't conflate.
+        EDITS: agent_script(edit, name, old_string, new_string) resolves path internally — prefer over file(edit) for agent scripts. delete ALWAYS makes a `.Trash` backup (recoverable via restore). pull(name) fetches upstream from the AgentScripts GitHub repo. list_backups(name?) lists backups newest-first.
         """
     }
 
@@ -494,8 +500,8 @@ public enum AgentTools {
                 "end_line": ["type": "integer", "description": "For create: 1-based end line for section editing"],
                 "diff_id": ["type": "string", "description": "For apply: UUID from create"],
                 "diff": ["type": "string", "description": "For apply: inline diff with =/-/+ prefixes"],
-                "offset": ["type": "integer", "description": "For read: start line (default 1)"],
-                "limit": ["type": "integer", "description": "For read: max lines (default 2000)"],
+                "offset": ["type": "integer", "description": "For read: start line (default 1). Output capped at 50K chars; files under 50K return in ONE read — only chunk if truly huge."],
+                "limit": ["type": "integer", "description": "For read: max lines (default 2000). Output capped at 50K chars regardless."],
                 "pattern": ["type": "string", "description": "For list: glob. For search: regex"],
                 "include": ["type": "string", "description": "For search: file filter (e.g. *.swift)"],
                 "detail": ["type": "string", "description": "For read_dir: 'slim' (default, names only) or 'more' (full ls -la with sizes/dates/permissions)"],
@@ -615,12 +621,26 @@ public enum AgentTools {
                 SYSTEM EVENTS — universally available in BOTH routes. `import SystemEventsBridge` then `let se: SystemEventsApplication = SBApplication(bundleIdentifier: "com.apple.systemevents")!` (PRIMARY), or `tell application "System Events" to keystroke "a" using command down` inside an NSAppleScript string (SECONDARY). Use it for keystrokes, menu invocation, UI element clicks, process/window management, file/folder ops. Almost every multi-app automation pairs the target app with System Events for the parts that aren't in the target app's own dictionary.
 
                 Default to ScriptingBridge. Drop down to NSAppleScript when it's clearly simpler.
+
+                ACTIONS: list, read, create, update, edit, delete, run, combine, restore, pull, list_backups.
+                - edit(name, old_string, new_string, replace_all?): Edit an agent script BY NAME — resolves the path internally. Use this INSTEAD of file(action:"edit") when modifying agent scripts; the model NEVER needs to know the absolute path.
+                - delete(name): ALWAYS creates a `.Trash` backup before removing — fully reversible via restore.
+                - restore(name): Restore the most recent `.Trash` backup. Pair with list_backups to see what's available. Refuses to overwrite a live script — delete first.
+                - pull(name): Fetch the upstream version from the AgentScripts GitHub repo (single raw HTTP request, fast). Use when the user wants the *original* upstream version rather than a local backup that may contain edits. Refuses to overwrite a live script.
+                - list_backups(name?): List `.Trash` backups for one script (or all if name omitted), newest first. Format: `<name>-<yyyyMMdd-HHmmss>.swift`. Pick a name to pass to restore.
+
+                ENV CONTRACT (exported to every script run):
+                - AGENT_PROJECT_FOLDER: ALWAYS the active tab's project folder (or $HOME if none). Use as the default cwd. The out-of-process runner also sets the script's process cwd to this, so getcwd()/FileManager.default.currentDirectoryPath return it too.
+                - AGENT_SCRIPT_ARGS: Only set when the LLM passed `arguments:"..."`. Carries explicit args. Does NOT inherit from project folder. Read AGENT_PROJECT_FOLDER for cwd, AGENT_SCRIPT_ARGS for explicit args — they are independent, don't conflate them.
                 """,
             properties: [
-                "action": ["type": "string", "description": "list|read|create|update|run|delete|combine"],
-                "name": ["type": "string", "description": "Script name (for read/create/update/run/delete)"],
+                "action": ["type": "string", "description": "list|read|create|update|edit|run|delete|combine|restore|pull|list_backups"],
+                "name": ["type": "string", "description": "Script name (for read/create/update/edit/run/delete/restore/pull/list_backups)"],
                 "content": ["type": "string", "description": "Swift source code (for create/update). For Mac app automation, prefer `import XBridge` (ScriptingBridge — see tool description for the 50 available bridges) over NSAppleScript. If using NSAppleScript, call applescript(lookup_sdef, bundle_id:...) FIRST to get the dictionary."],
-                "arguments": ["type": "string", "description": "For run: string passed via AGENT_SCRIPT_ARGS env var"],
+                "old_string": ["type": "string", "description": "For edit: text to find inside the script"],
+                "new_string": ["type": "string", "description": "For edit: replacement text"],
+                "replace_all": ["type": "boolean", "description": "For edit: replace all occurrences (default false)"],
+                "arguments": ["type": "string", "description": "For run: string passed via AGENT_SCRIPT_ARGS env var (independent of AGENT_PROJECT_FOLDER, which is always set to the project folder)"],
                 "source_a": ["type": "string", "description": "For combine: first script name"],
                 "source_b": ["type": "string", "description": "For combine: second script name"],
                 "target": ["type": "string", "description": "For combine: output script name"],
@@ -630,10 +650,10 @@ public enum AgentTools {
         // --- AppleScript (consolidated) ---
         ToolDef(
             name: Name.appleScriptTool,
-            description: "AppleScript automation. ALWAYS call action='lookup_sdef' for the target app(s) FIRST to read the scripting dictionary, THEN action='execute' with verified commands. Guessing AppleScript syntax fails — every app exposes different terms. 51+ SDEFs bundled (Pages, Music, Mail, Safari, Finder, System Events, etc). Use bundle_id='list' to see catalog. **System Events (com.apple.systemevents) is the universal helper app — keystrokes, menu invocation, UI element clicking, process/window management, file/folder ops. ALWAYS available, often combined with another app (e.g. open Safari, then System Events keystroke; open Pages, then System Events click menu).** Multi-app workflows can fetch every SDEF in ONE call by passing a comma-separated list or an array — no need to loop. Failures auto-inject the SDEFs of every `tell application \"X\"` clause in the script.",
+            description: "AppleScript automation. ALWAYS call action='lookup_sdef' for the target app(s) FIRST to read the scripting dictionary, THEN action='execute' with verified commands. Guessing AppleScript syntax fails — every app exposes different terms. 51+ SDEFs bundled (Pages, Music, Mail, Safari, Finder, System Events, etc). Use bundle_id='list' to see catalog. **System Events (com.apple.systemevents) is the universal helper app — keystrokes, menu invocation, UI element clicking, process/window management, file/folder ops. ALWAYS available, often combined with another app (e.g. open Safari, then System Events keystroke; open Pages, then System Events click menu).** Multi-app workflows can fetch every SDEF in ONE call by passing a comma-separated list or an array — no need to loop. Failures auto-inject the SDEFs of every `tell application \"X\"` clause in the script. CONVENIENCE VERBS: action=quit|open|launch|activate with name='AppName' synthesizes `tell application \"AppName\" to <verb>` and runs it in-process — no need to write the AppleScript yourself for the common app-lifecycle case.",
             properties: [
-                "action": ["type": "string", "description": "execute|lookup_sdef|list|run|save|delete. Workflow: lookup_sdef (optionally batch) → execute."],
-                "name": ["type": "string", "description": "Script name (for run/save/delete)"],
+                "action": ["type": "string", "description": "execute|lookup_sdef|list|run|save|delete|quit|open|launch|activate. Workflow: lookup_sdef (optionally batch) → execute. Convenience verbs (quit/open/launch/activate) take `name` and synthesize the tell-block."],
+                "name": ["type": "string", "description": "Script name (for run/save/delete) OR app name (for quit/open/launch/activate convenience verbs)"],
                 "source": ["type": "string", "description": "AppleScript source code (for execute/save). Must use ONLY commands/properties found via lookup_sdef."],
                 "bundle_id": ["type": "string", "description": "For lookup_sdef: app bundle ID (e.g. com.apple.Music). Pass MULTIPLE in one call as comma-separated string ('com.apple.Safari,com.apple.systemevents') OR JSON array (['com.apple.Safari','com.apple.systemevents']) for multi-app scripts. Use 'list' to see the full catalog."],
                 "class_name": ["type": "string", "description": "For lookup_sdef: specific class to drill into (e.g. 'track', 'window', 'document') after seeing the app summary. Ignored when bundle_id is a multi-app list."],
@@ -643,10 +663,10 @@ public enum AgentTools {
         // --- JavaScript/JXA (consolidated) ---
         ToolDef(
             name: Name.javascriptTool,
-            description: "JavaScript for Automation (JXA) — JS surface over the SAME scripting dictionaries that AppleScript uses. Pattern: `var app = Application(\"X\"); app.<command>()`. The dot-syntax maps directly to the SDEF's commands/classes/properties (camelCase the multi-word names). ALWAYS call applescript(action:\"lookup_sdef\", bundle_id:\"com.apple.X\") FIRST to get the canonical vocabulary — guessing fails the same way it does in AppleScript. 51+ SDEFs bundled. **System Events is universally available in JXA: `var se = Application(\"System Events\"); se.keystroke(\"a\", { using: \"command down\" });` — use it for keystrokes, menu invocation, UI element clicks, process/window management.** JXA failures auto-inject the SDEF of every `Application(\"X\")` reference on retry.",
+            description: "JavaScript for Automation (JXA) — JS surface over the SAME scripting dictionaries that AppleScript uses. Pattern: `var app = Application(\"X\"); app.<command>()`. The dot-syntax maps directly to the SDEF's commands/classes/properties (camelCase the multi-word names). ALWAYS call applescript(action:\"lookup_sdef\", bundle_id:\"com.apple.X\") FIRST to get the canonical vocabulary — guessing fails the same way it does in AppleScript. 51+ SDEFs bundled. **System Events is universally available in JXA: `var se = Application(\"System Events\"); se.keystroke(\"a\", { using: \"command down\" });` — use it for keystrokes, menu invocation, UI element clicks, process/window management.** JXA failures auto-inject the SDEF of every `Application(\"X\")` reference on retry. CONVENIENCE VERBS: action=quit|open|launch|activate with name='AppName' synthesizes `Application(\"AppName\").<verb>()` JXA and runs it in-process via `osascript -l JavaScript` — skip writing the script for app-lifecycle calls.",
             properties: [
-                "action": ["type": "string", "description": "execute|list|run|save|delete. Workflow: lookup_sdef (via applescript tool) → execute."],
-                "name": ["type": "string", "description": "Script name (for run/save/delete)"],
+                "action": ["type": "string", "description": "execute|list|run|save|delete|quit|open|launch|activate. Workflow: lookup_sdef (via applescript tool) → execute. Convenience verbs (quit/open/launch/activate) take `name` and synthesize the JXA."],
+                "name": ["type": "string", "description": "Script name (for run/save/delete) OR app name (for quit/open/launch/activate convenience verbs)"],
                 "source": ["type": "string", "description": "JXA source code (for execute/save). Use ONLY commands/properties found via applescript(lookup_sdef). The dictionary's `commands` become methods on `Application(\"X\")`; classes become element accessors."],
             ],
             required: ["action"]
@@ -654,9 +674,10 @@ public enum AgentTools {
         // --- Accessibility (consolidated) ---
         ToolDef(
             name: Name.accessibility,
-            description: "macOS UI automation via AXorcist. Element-based ONLY — every action takes role/title/value/appBundleId, never coordinates. If you don't know an app's bundle ID, call manage_app(action:list) first to see every running app with its bundle ID.",
+            description: "macOS UI automation via AXorcist. Element-based ONLY — every action takes role/title/value/appBundleId, never coordinates. If you don't know an app's bundle ID, call manage_app(sub_action:\"list\") first to see every running app with its bundle ID. APP LIFECYCLE CONVENIENCE VERBS: action=quit|open|launch|activate|hide|unhide with name='AppName' (or bundle ID) routes directly to ax_manage_app — no need to wrap in manage_app+sub_action. The `name` param accepts a natural app name like \"Photo Booth\" or a bundle ID. NOTE: action=manage_app correctly accepts a `sub_action` parameter (the dispatcher remaps sub_action → action internally).",
             properties: [
-                "action": ["type": "string", "description": "open_app|find_element|click_element|type_into_element|scroll_to_element|list_windows|inspect_element|get_properties|perform_action|set_properties|get_focused_element|get_children|read_focused|wait_for_element|wait_adaptive|highlight_element|manage_app|show_menu|click_menu_item|set_window_frame|get_window_frame|screenshot|check_permission|request_permission|get_audit_log"],
+                "action": ["type": "string", "description": "open_app|find_element|click_element|type_into_element|scroll_to_element|list_windows|inspect_element|get_properties|perform_action|set_properties|get_focused_element|get_children|read_focused|wait_for_element|wait_adaptive|highlight_element|manage_app|show_menu|click_menu_item|set_window_frame|get_window_frame|screenshot|check_permission|request_permission|get_audit_log|quit|open|launch|activate|hide|unhide (lifecycle convenience: takes `name`, routes to ax_manage_app)"],
+                "name": ["type": "string", "description": "For lifecycle convenience verbs (quit/open/launch/activate/hide/unhide): natural app name like \"Photo Booth\" or a bundle ID"],
                 "role": ["type": "string", "description": "AX role: AXButton, AXTextField, AXLink, AXMenuItem, AXCheckBox, AXRadioButton, AXSlider, AXScrollArea, AXWebArea, AXImage, AXHeading, AXStaticText, AXWindow"],
                 "title": ["type": "string", "description": "Title/name to match (partial, case-insensitive). Searches AXTitle + AXDescription + AXHelp."],
                 "value": ["type": "string", "description": "Value to match (partial)"],
