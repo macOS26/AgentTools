@@ -266,6 +266,22 @@ public enum AgentTools {
         - root_shell (Launch Daemon) is for admin tasks only — never for everyday operations.
         - NEVER use sudo — use root_shell instead.
 
+        SHELL SAFETY — HARD-BLOCKED COMMANDS: Agent! enforces a local guardrail in-process BEFORE any shell command reaches XPC or Process. If you issue any of these patterns the call returns instantly with "Refused: ..." and your iteration is wasted. Never try them, even framed as "test" or "check":
+        - `rm -rf /` — including `-Rf`, `-fR`, `-fr`, `--recursive --force`, and `--no-preserve-root` variants
+        - `rm -rf /etc | /usr | /bin | /sbin | /var | /lib | /System | /Library | /Applications | /private | /Volumes | /Users | /home | /opt | /dev | /sys | /proc | /boot` — every top-level system root
+        - `rm -rf ~` `rm -rf ~/` `rm -rf ~/*` `rm -rf $HOME` `rm -rf $HOME/*` — your home directory
+        - `rm -rf *` `rm -rf .` `rm -rf ..` `rm -rf .*` — bare globs/relative paths (cwd could be `/` or `~`)
+        - `find / -delete` or `find ~ -delete` with broad roots
+        - `chmod -R 000 /...` `chown -R nobody /...` against system roots
+        - `dd of=/dev/disk*` `dd of=/dev/sda` `dd of=/dev/nvme*` — raw disk wipes
+        - `mkfs.*` — filesystem formatting
+        - `> /dev/disk*` `> /dev/sd*` — redirect to raw disk
+        - `diskutil eraseDisk | zeroDisk | secureErase | eraseVolume`
+        - The classic fork bomb `:(){ :|:& };:`
+        - `mv ~ /dev/null` and equivalents
+        - Any of the above with `sudo`, `exec`, `eval`, `doas`, or env-var prefixes — wrappers don't bypass the guardrail
+        Always narrow paths to the specific subdirectory you actually want to touch. Never delete a parent dir to reach a child — list, then target the specific child.
+
         TCC (in-process): agent_script(run), applescript(execute), accessibility. NO TCC: user_shell, root_shell, shell.
         AGENT SCRIPTS: ~/Documents/AgentScript/agents/. Swift dylibs. Entry: @_cdecl("script_main") public func scriptMain() -> Int32. Args via AGENT_SCRIPT_ARGS env. Full Swift + TCC. App automation inside an agent script: PREFER ScriptingBridge (`import ScriptingBridge`, typed Swift API, compile-time checked) — use SDEFs at ~/Documents/AgentScript/system/SDEFs/ to know the vocabulary. NSAppleScript is a perfectly valid fallback (`import Foundation`, `NSAppleScript(source:)?.executeAndReturnError(&err)`) for one-off tells, apps without a usable bridge header, or when the SDEF terms map awkwardly to Swift. Both run in-process with full TCC. Mix freely in the same script.
         """
@@ -365,6 +381,16 @@ public enum AgentTools {
         - root_shell (Launch Daemon) for admin tasks only — never everyday.
         - NEVER sudo — use root_shell.
 
+        SHELL SAFETY — HARD-BLOCKED (refused locally before XPC/Process, returns "Refused: ..."):
+        - `rm -rf /` and any [rR][fF] flag combo with /, /etc, /usr, /bin, /var, /System, /Library, /Applications, /private, /Volumes, /Users, /home, /opt, /dev, /proc, /sys, /boot — every system root.
+        - `rm -rf ~`, `~/`, `~/*`, `$HOME`, `$HOME/*` — your home dir.
+        - `rm -rf *` `rm -rf .` `rm -rf ..` — bare globs/relative paths (cwd unknown).
+        - `find / -delete`, `chmod -R 000 /...`, `chown -R nobody /...`.
+        - `dd of=/dev/disk*|sd*|nvme*`, `mkfs.*`, `> /dev/disk*`, `diskutil eraseDisk|zeroDisk|secureErase|eraseVolume`.
+        - Fork bomb `:(){ :|:& };:`. `mv ~ /dev/null`.
+        - `sudo`/`exec`/`eval`/`doas`/env-var prefixes do NOT bypass the guardrail.
+        Always narrow paths to the specific subdirectory you actually want to touch.
+
         TCC (in-process): agent_script(run), applescript(execute), accessibility. NO TCC: user_shell, root_shell, shell.
         AGENT SCRIPTS: ~/Documents/AgentScript/agents/. Swift dylibs. Entry: @_cdecl("script_main") public func scriptMain() -> Int32. Args via AGENT_SCRIPT_ARGS env. Full Swift + TCC. App automation inside an agent script: PREFER ScriptingBridge (`import ScriptingBridge`, typed Swift API, compile-time checked) — use SDEFs at ~/Documents/AgentScript/system/SDEFs/ to know the vocabulary. NSAppleScript is a perfectly valid fallback (`import Foundation`, `NSAppleScript(source:)?.executeAndReturnError(&err)`) for one-off tells, apps without a usable bridge header, or when the SDEF terms map awkwardly to Swift. Both run in-process with full TCC. Mix freely in the same script.
         """
@@ -394,6 +420,7 @@ public enum AgentTools {
         macOS agent for \(userName). Project: \(folder). ALWAYS call \(n.taskComplete) when finished. If you need user input, put the question in the summary AND call \(n.taskComplete). Every response MUST end with \(n.taskComplete).
         TOOLS: \(n.fileManager) (action: read/write/edit/list/search), \(n.executeAgentCommand), \(n.agentScript) (list/read/create/update/run).
         Shell: \(n.executeAgentCommand) for rm/mv/cp/ls/grep. Don't repeat stdout.
+        BLOCKED: `rm -rf /`, `rm -rf ~`, `rm -rf *`, system roots, dd to /dev/disk, mkfs, fork bombs. Refused locally — narrow paths to specific subdirs.
         """
     }
 
