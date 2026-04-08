@@ -238,7 +238,9 @@ public enum AgentTools {
         - Click a menu via System Events → lookup_sdef("com.apple.systemevents", class_name:"menu item") → execute. (Better: use accessibility(click_menu_item) instead — it skips AppleScript entirely.)
         - Get Finder selection → lookup_sdef("com.apple.finder") → execute(`tell application "Finder" to get selection`).
 
-        WHEN APPLESCRIPT FAILS: a 📖 SDEF auto-injected block is appended to the error showing the exact dictionary. Read it. Rewrite your script using ONLY the documented terms. Don't retry the same broken syntax.
+        SYSTEM EVENTS IS UNIVERSAL: bundle id `com.apple.systemevents`. Available from AppleScript, JXA, osascript, the safari tool's underlying AppleScript, AND from inside agent scripts (`import SystemEventsBridge` or `tell application "System Events" ...`). Use it for ANYTHING the target app's own dictionary doesn't expose: keystrokes (`keystroke "a" using command down`), menu invocation (`click menu item "Save" of menu "File" of menu bar 1 of process "Pages"`), UI element clicks, process/window management, file/folder ops, frontmost app detection. Almost every real-world automation pairs the target app's tell-block with a System Events tell-block. Fetch BOTH SDEFs in one batch lookup_sdef call: `bundle_id: "com.apple.Safari,com.apple.systemevents"`.
+
+        WHEN APPLESCRIPT FAILS: a 📖 SDEF auto-injected block is appended to the error showing the exact dictionary (every `tell application "X"` clause in the script gets its SDEF injected). Read it. Rewrite your script using ONLY the documented terms. Don't retry the same broken syntax.
 
         PREFER OTHER TOOLS WHEN POSSIBLE:
         - UI clicks/menus/typing → accessibility (faster, no SDEF lookup needed).
@@ -342,7 +344,8 @@ public enum AgentTools {
         Every Mac app has its own AppleScript vocabulary. Guessing fails. lookup_sdef returns the dictionary so your script compiles first try.
         WORKFLOW: lookup_sdef(bundle_id:"...") → (optional) lookup_sdef with class_name to drill in → execute(source:"tell application \\"X\\" to ...").
         BUNDLES: com.apple.Music | com.apple.mail | com.apple.iWork.Pages | com.apple.iWork.Numbers | com.apple.iWork.Keynote | com.apple.Safari | com.apple.finder | com.apple.systemevents | com.apple.iCal | com.apple.AddressBook | com.apple.Photos | com.apple.Notes | com.apple.TextEdit | com.apple.Terminal | com.apple.iChat | com.apple.QuickTimePlayerX. Use bundle_id="list" for the full catalog.
-        FAILURE: a 📖 SDEF block is auto-injected on errors. Read it. Rewrite using ONLY documented terms.
+        SYSTEM EVENTS UNIVERSAL: `com.apple.systemevents`. Works from AppleScript, JXA, osascript, safari, and agent scripts. Use it for keystrokes, menu invocation, UI clicks, process/window management — anything the target app's own dictionary doesn't expose. Almost every multi-app workflow pairs the target with System Events. Batch lookup_sdef supports both at once: `bundle_id: "com.apple.<App>,com.apple.systemevents"`.
+        FAILURE: a 📖 SDEF block is auto-injected on errors (one per `tell application` clause). Read it. Rewrite using ONLY documented terms.
         PREFER: accessibility for UI clicks/menus. file tool for files. AppleScript only when behavior is exclusive to the app's dictionary (Music playback, Mail compose, Pages model).
 
         CODING DISCIPLINE:
@@ -584,6 +587,8 @@ public enum AgentTools {
                 SECONDARY — NSAppleScript (still approved and encouraged when it makes the automation easier): `import Foundation` then `NSAppleScript(source: "tell application \\"X\\" to ...")?.executeAndReturnError(&err)`. Reach for this when an AppleScript one-liner is shorter than the equivalent ScriptingBridge ceremony, when the SDEF maps awkwardly to typed Swift, when you want behavior that's only documented in the dictionary, or when the app has no bridge. BEFORE writing the AppleScript string call applescript(action:"lookup_sdef", bundle_id:"com.apple.X") to get the canonical commands/classes/properties so you don't guess. 51+ SDEFs bundled.
                 EXAMPLE:  `let s = NSAppleScript(source: "tell application \\"Finder\\" to get the name of every disk")!`  →  `s.executeAndReturnError(nil)`
 
+                SYSTEM EVENTS — universally available in BOTH routes. `import SystemEventsBridge` then `let se: SystemEventsApplication = SBApplication(bundleIdentifier: "com.apple.systemevents")!` (PRIMARY), or `tell application "System Events" to keystroke "a" using command down` inside an NSAppleScript string (SECONDARY). Use it for keystrokes, menu invocation, UI element clicks, process/window management, file/folder ops. Almost every multi-app automation pairs the target app with System Events for the parts that aren't in the target app's own dictionary.
+
                 Default to ScriptingBridge. Drop down to NSAppleScript when it's clearly simpler.
                 """,
             properties: [
@@ -600,7 +605,7 @@ public enum AgentTools {
         // --- AppleScript (consolidated) ---
         ToolDef(
             name: Name.appleScriptTool,
-            description: "AppleScript automation. ALWAYS call action='lookup_sdef' for the target app(s) FIRST to read the scripting dictionary, THEN action='execute' with verified commands. Guessing AppleScript syntax fails — every app exposes different terms. 51+ SDEFs bundled (Pages, Music, Mail, Safari, Finder, System Events, etc). Use bundle_id='list' to see catalog. Multi-app workflows (Safari + System Events, Pages + Image Events, Mail + Contacts, etc.) can fetch every SDEF in ONE call by passing a comma-separated list or an array — no need to loop. Failures auto-inject the SDEFs of every `tell application \"X\"` clause in the script.",
+            description: "AppleScript automation. ALWAYS call action='lookup_sdef' for the target app(s) FIRST to read the scripting dictionary, THEN action='execute' with verified commands. Guessing AppleScript syntax fails — every app exposes different terms. 51+ SDEFs bundled (Pages, Music, Mail, Safari, Finder, System Events, etc). Use bundle_id='list' to see catalog. **System Events (com.apple.systemevents) is the universal helper app — keystrokes, menu invocation, UI element clicking, process/window management, file/folder ops. ALWAYS available, often combined with another app (e.g. open Safari, then System Events keystroke; open Pages, then System Events click menu).** Multi-app workflows can fetch every SDEF in ONE call by passing a comma-separated list or an array — no need to loop. Failures auto-inject the SDEFs of every `tell application \"X\"` clause in the script.",
             properties: [
                 "action": ["type": "string", "description": "execute|lookup_sdef|list|run|save|delete. Workflow: lookup_sdef (optionally batch) → execute."],
                 "name": ["type": "string", "description": "Script name (for run/save/delete)"],
@@ -613,7 +618,7 @@ public enum AgentTools {
         // --- JavaScript/JXA (consolidated) ---
         ToolDef(
             name: Name.javascriptTool,
-            description: "JavaScript for Automation (JXA) — JS surface over the SAME scripting dictionaries that AppleScript uses. Pattern: `var app = Application(\"X\"); app.<command>()`. The dot-syntax maps directly to the SDEF's commands/classes/properties (camelCase the multi-word names). ALWAYS call applescript(action:\"lookup_sdef\", bundle_id:\"com.apple.X\") FIRST to get the canonical vocabulary — guessing fails the same way it does in AppleScript. 51+ SDEFs bundled. JXA failures auto-inject the SDEF on retry.",
+            description: "JavaScript for Automation (JXA) — JS surface over the SAME scripting dictionaries that AppleScript uses. Pattern: `var app = Application(\"X\"); app.<command>()`. The dot-syntax maps directly to the SDEF's commands/classes/properties (camelCase the multi-word names). ALWAYS call applescript(action:\"lookup_sdef\", bundle_id:\"com.apple.X\") FIRST to get the canonical vocabulary — guessing fails the same way it does in AppleScript. 51+ SDEFs bundled. **System Events is universally available in JXA: `var se = Application(\"System Events\"); se.keystroke(\"a\", { using: \"command down\" });` — use it for keystrokes, menu invocation, UI element clicks, process/window management.** JXA failures auto-inject the SDEF of every `Application(\"X\")` reference on retry.",
             properties: [
                 "action": ["type": "string", "description": "execute|list|run|save|delete. Workflow: lookup_sdef (via applescript tool) → execute."],
                 "name": ["type": "string", "description": "Script name (for run/save/delete)"],
@@ -659,7 +664,7 @@ public enum AgentTools {
         // --- Web (consolidated) ---
         ToolDef(
             name: Name.safari,
-            description: "Safari automation. Open URLs, click, type, read content, search, manage tabs/windows. Built on top of Safari's AppleScript dictionary — `execute_js` runs through `tell application \"Safari\" to do JavaScript \"...\" in document 1`. For automation beyond these high-level actions (multi-window orchestration, source viewing, file downloads, custom tab properties), call applescript(action:\"lookup_sdef\", bundle_id:\"com.apple.Safari\") to see the full vocabulary, then run the AppleScript via the applescript tool.",
+            description: "Safari automation. Open URLs, click, type, read content, search, manage tabs/windows. Built on top of Safari's AppleScript dictionary — `execute_js` runs through `tell application \"Safari\" to do JavaScript \"...\" in document 1`. For automation beyond these high-level actions (multi-window orchestration, source viewing, file downloads, custom tab properties), call applescript(action:\"lookup_sdef\", bundle_id:\"com.apple.Safari\") to see the full vocabulary, then run the AppleScript via the applescript tool. **For browser-chrome interactions that aren't in Safari's dictionary (clicking the toolbar, invoking menus, dismissing dialogs, sending Cmd-key shortcuts), combine Safari with System Events: `tell application \"Safari\" to activate` then `tell application \"System Events\" to keystroke ...` — fetch both SDEFs in one applescript(lookup_sdef) batch call.**",
             properties: [
                 "action": ["type": "string", "description": "open|find|click|type|execute_js|get_url|get_title|read_content|google_search|scroll_to|select|submit|navigate|list_tabs|switch_tab|list_windows|scan|search"],
                 "url": ["type": "string", "description": "URL to open"],
