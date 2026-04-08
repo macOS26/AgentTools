@@ -575,11 +575,16 @@ public enum AgentTools {
         // --- Agent Scripts (consolidated) ---
         ToolDef(
             name: Name.agentScript,
-            description: "Swift dylibs (~/Documents/AgentScript/agents) with full TCC.",
+            description: """
+                Swift dylibs (~/Documents/AgentScript/agents) with full TCC. App automation has TWO routes — both work, mix freely:
+                ROUTE 1 — ScriptingBridge (PREFERRED, typed Swift): `import XBridge` and use the typed API. ~50 bridges already shipped: AdobeIllustratorBridge, AppleScriptUtilityBridge, AutomatorBridge, BluetoothFileExchangeBridge, CalendarBridge, ConsoleBridge, ContactsBridge, DatabaseEventsBridge, DeveloperBridge, FinalCutProCreatorStudioBridge, FinderBridge, FirefoxBridge, FolderActionsSetupBridge, GoogleChromeBridge, ImageEventsBridge, InstrumentsBridge, KeynoteBridge, LogicProCreatorStudioBridge, MailBridge, MessagesBridge, MicrosoftEdgeBridge, MusicBridge, NotesBridge, NumbersBridge, NumbersCreatorStudioBridge, PagesBridge, PagesCreatorStudioBridge, PhotosBridge, PixelmatorProBridge, PreviewBridge, QuickTimePlayerBridge, RemindersBridge, SafariBridge, ScreenSharingBridge, ScriptEditorBridge, SeleniumBridge, ShortcutsBridge, ShortcutsEventsBridge, SimulatorBridge, SystemEventsBridge, SystemInformationBridge, SystemSettingsBridge, TVBridge, TerminalBridge, TextEditBridge, UTMBridge, VoiceOverBridge, WishBridge, XcodeScriptingBridge, plus ScriptingBridgeCommon (shared helpers) and AgentAccessibility (AX automation). The Package.swift parser auto-wires any `import XBridge` line to the right product — no Package.swift edits needed. Inspect a bridge's vocabulary by reading its source: file(action:"read", path:"~/Documents/AgentScript/bridges/Sources/AgentEventBridges/MusicBridge.swift").
+                ROUTE 2 — NSAppleScript fallback (`import Foundation`, `NSAppleScript(source: "tell application \\"X\\" to ...")?.executeAndReturnError(&err)`): use when no bridge exists for the app, the SDEF maps awkwardly to typed Swift, or you need a one-off tell. BEFORE writing the AppleScript string, call applescript(action:"lookup_sdef", bundle_id:"com.apple.X") to get the canonical commands/classes/properties — guessing fails the same way it does in standalone AppleScript. 51+ SDEFs bundled.
+                Both routes inherit the host app's TCC. Entry point: @_cdecl("script_main") public func scriptMain() -> Int32. Args via AGENT_SCRIPT_ARGS env var.
+                """,
             properties: [
                 "action": ["type": "string", "description": "list|read|create|update|run|delete|combine"],
                 "name": ["type": "string", "description": "Script name (for read/create/update/run/delete)"],
-                "content": ["type": "string", "description": "Swift source code (for create/update)"],
+                "content": ["type": "string", "description": "Swift source code (for create/update). For Mac app automation, prefer `import XBridge` (ScriptingBridge — see tool description for the 50 available bridges) over NSAppleScript. If using NSAppleScript, call applescript(lookup_sdef, bundle_id:...) FIRST to get the dictionary."],
                 "arguments": ["type": "string", "description": "For run: string passed via AGENT_SCRIPT_ARGS env var"],
                 "source_a": ["type": "string", "description": "For combine: first script name"],
                 "source_b": ["type": "string", "description": "For combine: second script name"],
