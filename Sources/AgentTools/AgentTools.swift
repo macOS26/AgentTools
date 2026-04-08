@@ -600,24 +600,24 @@ public enum AgentTools {
         // --- AppleScript (consolidated) ---
         ToolDef(
             name: Name.appleScriptTool,
-            description: "AppleScript automation. ALWAYS call action='lookup_sdef' for the target app FIRST to read its scripting dictionary, THEN action='execute' with verified commands. Guessing AppleScript syntax fails — every app exposes different terms. 51+ SDEFs bundled (Pages, Music, Mail, Safari, Finder, System Events, etc). Use bundle_id='list' to see catalog.",
+            description: "AppleScript automation. ALWAYS call action='lookup_sdef' for the target app(s) FIRST to read the scripting dictionary, THEN action='execute' with verified commands. Guessing AppleScript syntax fails — every app exposes different terms. 51+ SDEFs bundled (Pages, Music, Mail, Safari, Finder, System Events, etc). Use bundle_id='list' to see catalog. Multi-app workflows (Safari + System Events, Pages + Image Events, Mail + Contacts, etc.) can fetch every SDEF in ONE call by passing a comma-separated list or an array — no need to loop. Failures auto-inject the SDEFs of every `tell application \"X\"` clause in the script.",
             properties: [
-                "action": ["type": "string", "description": "execute|lookup_sdef|list|run|save|delete. Workflow: lookup_sdef → execute."],
+                "action": ["type": "string", "description": "execute|lookup_sdef|list|run|save|delete. Workflow: lookup_sdef (optionally batch) → execute."],
                 "name": ["type": "string", "description": "Script name (for run/save/delete)"],
                 "source": ["type": "string", "description": "AppleScript source code (for execute/save). Must use ONLY commands/properties found via lookup_sdef."],
-                "bundle_id": ["type": "string", "description": "For lookup_sdef: app bundle ID (e.g. com.apple.Music, com.apple.systemevents, com.apple.Pages). Use 'list' to see all bundled SDEFs."],
-                "class_name": ["type": "string", "description": "For lookup_sdef: specific class to drill into (e.g. 'track', 'window', 'document') after seeing the app summary."],
+                "bundle_id": ["type": "string", "description": "For lookup_sdef: app bundle ID (e.g. com.apple.Music). Pass MULTIPLE in one call as comma-separated string ('com.apple.Safari,com.apple.systemevents') OR JSON array (['com.apple.Safari','com.apple.systemevents']) for multi-app scripts. Use 'list' to see the full catalog."],
+                "class_name": ["type": "string", "description": "For lookup_sdef: specific class to drill into (e.g. 'track', 'window', 'document') after seeing the app summary. Ignored when bundle_id is a multi-app list."],
             ],
             required: ["action"]
         ),
         // --- JavaScript/JXA (consolidated) ---
         ToolDef(
             name: Name.javascriptTool,
-            description: "JavaScript for Automation (JXA).",
+            description: "JavaScript for Automation (JXA) — JS surface over the SAME scripting dictionaries that AppleScript uses. Pattern: `var app = Application(\"X\"); app.<command>()`. The dot-syntax maps directly to the SDEF's commands/classes/properties (camelCase the multi-word names). ALWAYS call applescript(action:\"lookup_sdef\", bundle_id:\"com.apple.X\") FIRST to get the canonical vocabulary — guessing fails the same way it does in AppleScript. 51+ SDEFs bundled. JXA failures auto-inject the SDEF on retry.",
             properties: [
-                "action": ["type": "string", "description": "execute|list|run|save|delete"],
+                "action": ["type": "string", "description": "execute|list|run|save|delete. Workflow: lookup_sdef (via applescript tool) → execute."],
                 "name": ["type": "string", "description": "Script name (for run/save/delete)"],
-                "source": ["type": "string", "description": "JXA source code (for execute/save)"],
+                "source": ["type": "string", "description": "JXA source code (for execute/save). Use ONLY commands/properties found via applescript(lookup_sdef). The dictionary's `commands` become methods on `Application(\"X\")`; classes become element accessors."],
             ],
             required: ["action"]
         ),
@@ -659,14 +659,14 @@ public enum AgentTools {
         // --- Web (consolidated) ---
         ToolDef(
             name: Name.safari,
-            description: "Safari automation. Open URLs, click, type, read content, search, manage tabs/windows.",
+            description: "Safari automation. Open URLs, click, type, read content, search, manage tabs/windows. Built on top of Safari's AppleScript dictionary — `execute_js` runs through `tell application \"Safari\" to do JavaScript \"...\" in document 1`. For automation beyond these high-level actions (multi-window orchestration, source viewing, file downloads, custom tab properties), call applescript(action:\"lookup_sdef\", bundle_id:\"com.apple.Safari\") to see the full vocabulary, then run the AppleScript via the applescript tool.",
             properties: [
                 "action": ["type": "string", "description": "open|find|click|type|execute_js|get_url|get_title|read_content|google_search|scroll_to|select|submit|navigate|list_tabs|switch_tab|list_windows|scan|search"],
                 "url": ["type": "string", "description": "URL to open"],
                 "selector": ["type": "string", "description": "CSS selector for click/type/submit"],
                 "text": ["type": "string", "description": "Text to type"],
                 "query": ["type": "string", "description": "Search query"],
-                "script": ["type": "string", "description": "JavaScript code"],
+                "script": ["type": "string", "description": "JavaScript code (in-page JS, runs through Safari's `do JavaScript` AppleScript command)"],
             ],
             required: ["action"]
         ),
