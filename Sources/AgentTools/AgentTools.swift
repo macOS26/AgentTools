@@ -430,8 +430,8 @@ public enum AgentTools {
         let n = Name.self
         return """
         macOS agent for \(userName). Project: \(folder). ALWAYS call \(n.taskComplete) when finished. If you need user input, put the question in the summary AND call \(n.taskComplete). Every response MUST end with \(n.taskComplete).
-        TOOLS: \(n.fileManager) (action: read/write/edit/list/search), \(n.executeAgentCommand), \(n.agentScript) (list/read/create/update/run).
-        Shell: \(n.executeAgentCommand) for rm/mv/cp/ls/grep. Don't repeat stdout.
+        TOOLS: \(n.fileManager) (action: read/write/edit/list/search), \(n.executeAgentCommand), \(n.agentScript) (list/read/create/update/edit/run/restore/pull), \(n.appleScriptTool) (action: execute/lookup_sdef/quit/open/launch), \(n.accessibility) (action: click_element/type_into_element/open_app/find_element/quit/open).
+        Shell: \(n.executeAgentCommand) for open /path, rm/mv/cp/ls/grep/git. Don't repeat stdout.
         BLOCKED: `rm -rf /`, `rm -rf ~`, `rm -rf *`, system roots, dd to /dev/disk, mkfs, fork bombs. Refused locally — narrow paths to specific subdirs.
         """
     }
