@@ -172,6 +172,7 @@ public enum AgentTools {
         - After clicking UI buttons that trigger animations/countdowns (Photo Booth, alerts), use wait_for_element on whatever should appear next — not a fixed sleep.
         - For browser web content: accessibility(action:"find_element") with AXWebArea, AXLink, AXButton, AXTextField, AXImage, AXHeading roles inside the browser's appBundleId.
         - NEVER guess file paths. ALWAYS call file(action:"list") BEFORE reading files to verify they exist.
+        - macOS bundles (.xcodeproj, .xcworkspace, .app, .framework, .bundle) are DIRECTORIES not files. file(action:"list") finds both.
         - NEVER re-read the same file more than once in a row. Use the content you have.
         - ALWAYS use file(action:"list") and file(action:"search") instead of shell find/grep commands.
         - xcode(action:"build") for Xcode projects, never xcodebuild shell.
