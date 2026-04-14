@@ -259,7 +259,7 @@ public enum AgentTools {
         - If an approach fails, diagnose before switching. Don't retry blindly, don't abandon after one failure.
         - Don't re-read files already in context. Don't waste tokens on reads without edits.
         - edit for single-line changes. diff_apply for multi-line. One edit per call. Build after every edit.
-        - diff_apply: source=exact original lines, destination=exact replacement lines. RAW TEXT ONLY — never use ❌/✅ markers, +/- prefixes, or unified-diff format.
+        - diff_apply: Send ONLY the lines being changed as source, NOT the entire file. The tool finds those lines in the file and splices in the destination, preserving all other content. You can also use start_line/end_line instead of source. RAW TEXT ONLY — never use ❌/✅ markers, +/- prefixes, or unified-diff format.
         - If stuck after 3 attempts, call done and explain what failed.
 
         LEAST PRIVILEGE:
@@ -502,10 +502,10 @@ public enum AgentTools {
                 "new_string": ["type": "string", "description": "For edit: replacement text"],
                 "replace_all": ["type": "boolean", "description": "For edit: replace all (default false)"],
                 "context": ["type": "string", "description": "For edit: surrounding lines to disambiguate multiple matches"],
-                "source": ["type": "string", "description": "For create: full file content. For diff_apply: the EXACT original text from the file (omit to auto-read from file_path + start_line/end_line). NEVER use ❌/✅ markers or diff format — just the raw text from the file."],
-                "destination": ["type": "string", "description": "For create/diff_apply: the final text that should replace the source lines. NEVER use ❌/✅ markers or diff format — just the raw final text."],
-                "start_line": ["type": "integer", "description": "For create/diff_apply: 1-based start line of the section to replace."],
-                "end_line": ["type": "integer", "description": "For create/diff_apply: 1-based end line of the section to replace."],
+                "source": ["type": "string", "description": "For create: full file content. For diff_apply: the EXACT original lines from the file that you want to replace — send ONLY the changed snippet, NOT the entire file. The tool will find those lines within the file and replace them with destination. You may omit source and use start_line/end_line instead. NEVER use ❌/✅ markers or diff format — just the raw text."],
+                "destination": ["type": "string", "description": "For create/diff_apply: the replacement text. Must match source in scope (same number of lines or slightly different). NEVER use ❌/✅ markers or diff format — just the raw final text."],
+                "start_line": ["type": "integer", "description": "For create/diff_apply: 1-based start line of the section to replace. Use WITH end_line when you don't want to provide source text. If both source and start_line/end_line are given, start_line/end_line takes priority."],
+                "end_line": ["type": "integer", "description": "For create/diff_apply: 1-based end line (inclusive) of the section to replace. Use WITH start_line when you don't want to provide source text."],
                 "diff_id": ["type": "string", "description": "For apply: UUID from create"],
                 "diff": ["type": "string", "description": "For apply: inline diff with =/-/+ prefixes"],
                 "offset": ["type": "integer", "description": "For read: start line (default 1). Output capped at 50K chars; files under 50K return in ONE read — only chunk if truly huge."],
