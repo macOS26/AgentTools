@@ -259,6 +259,7 @@ public enum AgentTools {
         - If an approach fails, diagnose before switching. Don't retry blindly, don't abandon after one failure.
         - Don't re-read files already in context. Don't waste tokens on reads without edits.
         - edit for single-line changes. diff_apply for multi-line. One edit per call. Build after every edit.
+        - diff_apply: source=exact original lines, destination=exact replacement lines. RAW TEXT ONLY — never use ❌/✅ markers, +/- prefixes, or unified-diff format.
         - If stuck after 3 attempts, call done and explain what failed.
 
         LEAST PRIVILEGE:
@@ -491,7 +492,7 @@ public enum AgentTools {
         // --- File Manager (consolidated) ---
         ToolDef(
             name: Name.fileManager,
-            description: "File ops. edit=replace string. diff_apply=replace line range (preferred for code). mkdir=create dir. cd=change project folder.",
+            description: "File ops. edit=replace string. diff_apply=replace line range (preferred for multi-line edits). mkdir=create dir. cd=change project folder.",
             properties: [
                 "action": ["type": "string", "description": "read|write|edit|create|apply|undo|diff_apply|list|search|read_dir|mkdir|cd|if_to_switch|extract_function"],
                 "file_path": ["type": "string", "description": "File path (for read/write/edit/apply/undo/diff_apply)"],
@@ -501,10 +502,10 @@ public enum AgentTools {
                 "new_string": ["type": "string", "description": "For edit: replacement text"],
                 "replace_all": ["type": "boolean", "description": "For edit: replace all (default false)"],
                 "context": ["type": "string", "description": "For edit: surrounding lines to disambiguate multiple matches"],
-                "source": ["type": "string", "description": "For create/diff_apply: original text (omit to read from file_path)"],
-                "destination": ["type": "string", "description": "For create/diff_apply: the modified text"],
-                "start_line": ["type": "integer", "description": "For create: 1-based start line for section editing"],
-                "end_line": ["type": "integer", "description": "For create: 1-based end line for section editing"],
+                "source": ["type": "string", "description": "For create: full file content. For diff_apply: the EXACT original text from the file (omit to auto-read from file_path + start_line/end_line). NEVER use ❌/✅ markers or diff format — just the raw text from the file."],
+                "destination": ["type": "string", "description": "For create/diff_apply: the final text that should replace the source lines. NEVER use ❌/✅ markers or diff format — just the raw final text."],
+                "start_line": ["type": "integer", "description": "For create/diff_apply: 1-based start line of the section to replace."],
+                "end_line": ["type": "integer", "description": "For create/diff_apply: 1-based end line of the section to replace."],
                 "diff_id": ["type": "string", "description": "For apply: UUID from create"],
                 "diff": ["type": "string", "description": "For apply: inline diff with =/-/+ prefixes"],
                 "offset": ["type": "integer", "description": "For read: start line (default 1). Output capped at 50K chars; files under 50K return in ONE read — only chunk if truly huge."],
