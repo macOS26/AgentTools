@@ -139,6 +139,8 @@ public enum AgentTools {
         public static let conversation = "chat"
         public static let sendMessage = "msg"
         public static let planMode = "plan"
+        // Project Index (consolidated) — writes a portable JSONL file any LLM can read
+        public static let index = "index"
         public static let projectFolderTool = "directory"
         public static let codingMode = "mode"
     }
@@ -1021,6 +1023,18 @@ public enum AgentTools {
                 "steps": ["type": "string", "description": "create: newline-separated steps"],
                 "step": ["type": "integer", "description": "update: 1-based step number (1 = first step)"],
                 "status": ["type": "string", "description": "update: in_progress|completed|failed"],
+            ],
+            required: ["action"]
+        ),
+        ToolDef(
+            name: Name.index,
+            description: "Project index. Writes .agent-index/index.jsonl in the project folder — one JSON object per file ({path,size,mtime,language,sha256}). Portable: any LLM can read_file it. Actions: create|read|remove|recreate|append|continue.",
+            properties: [
+                "action": ["type": "string", "description": "create|read|remove|recreate|append|continue"],
+                "extensions": ["type": "string", "description": "Optional comma-separated file extensions to include (e.g. swift,md,plist). Defaults to common code/text types."],
+                "max_file_size": ["type": "integer", "description": "Max bytes per file to index (default 1MB). Larger files are skipped."],
+                "offset": ["type": "integer", "description": "read: 1-based start line in the JSONL (default 1)"],
+                "limit": ["type": "integer", "description": "read: max lines to return (default 500)"],
             ],
             required: ["action"]
         ),
