@@ -215,19 +215,24 @@ public enum AgentTools {
         - Example: "take a photo" → accessibility(action:"open_app", appBundleId:"Photo Booth") → accessibility(action:"click_element", role:"AXButton", title:"Take Photo", appBundleId:"Photo Booth") → done.
 
         MEMORY (memory) — Claude-compatible /memories filesystem, runs locally:
-        The `memory` tool is shaped exactly like Anthropic's `memory_20250818` tool so prompts and agents stay portable across providers. Files live under the sandbox path `/memories/*` which maps to ~/Documents/AgentScript/memory/ on disk. Paths may not escape the sandbox (no `..`).
+        The `memory` tool is shaped exactly like Anthropic's `memory_20250818` tool so prompts and agents stay portable across providers. Paths live under the sandbox `/memories/*`. Paths may not escape the sandbox (no `..`).
 
-        COMMANDS:
-        - view:        memory(command:"view", path:"/memories")                                  → lists files.
-                        memory(command:"view", path:"/memories/notes.md")                        → file contents.
-                        memory(command:"view", path:"/memories/notes.md", view_range:[1,40])     → partial (1-based inclusive; -1 = to end).
-        - create:      memory(command:"create", path:"/memories/x.md", file_text:"…")            → full-file write (overwrites).
-        - str_replace: memory(command:"str_replace", path:"/memories/x.md", old_str:"…", new_str:"…") → unique-match replace. Fails if 0 or >1 matches.
-        - insert:      memory(command:"insert", path:"/memories/x.md", insert_line:0, insert_text:"…") → insert BEFORE line (0 = top, N = after last).
-        - delete:      memory(command:"delete", path:"/memories/x.md")                           → remove a file.
+        TWO SCOPES (select via `scope` arg, default `global`):
+        - scope:"global"  → ~/Documents/AgentScript/memory/          (USER-LEVEL — shared across every project; preferences, cross-repo feedback, long-term notes)
+        - scope:"project" → {projectFolder}/.agent-memory/           (PROJECT-LEVEL — scoped to the active project folder; build quirks, file layout notes, this-repo conventions)
+        `project` scope errors if no project folder is selected. Prefer `project` for anything that only makes sense for this codebase; `global` for facts about the user or conventions that apply everywhere.
+
+        COMMANDS (work on either scope):
+        - view:        memory(command:"view", path:"/memories")                                          → list files.
+                        memory(command:"view", scope:"project", path:"/memories")                         → list project files.
+                        memory(command:"view", path:"/memories/notes.md", view_range:[1,40])              → partial (1-based inclusive; -1 = to end).
+        - create:      memory(command:"create", path:"/memories/x.md", file_text:"…")                    → full-file write (overwrites).
+        - str_replace: memory(command:"str_replace", path:"/memories/x.md", old_str:"…", new_str:"…")    → unique-match replace. Fails on 0 or >1 matches.
+        - insert:      memory(command:"insert", path:"/memories/x.md", insert_line:0, insert_text:"…")   → insert BEFORE line (0 = top, N = after last).
+        - delete:      memory(command:"delete", path:"/memories/x.md")                                    → remove.
         - rename:      memory(command:"rename", old_path:"/memories/a.md", new_path:"/memories/b.md")
 
-        WHEN TO USE: at the START of any task, call `memory(command:"view", path:"/memories")` to see if the user has relevant saved context (preferences, prior decisions, feedback). Write to memory only for durable facts worth surviving across conversations — NOT scratch state for the current task.
+        WHEN TO USE: at the START of any task, call `memory(command:"view", path:"/memories")` for BOTH scopes — global first, then scope:"project" if a project folder is set. Write only durable facts worth surviving across conversations — NOT scratch state for the current task. Project memory is ideal for "how this repo builds", "where config lives", "gotchas observed in this codebase".
 
         PROJECT INDEX (index) — repo-map in the project folder:
         Writes a portable JSONL file at `{projectFolder}/.agent-index/index.jsonl`. One JSON object per file: {path, size, lines, mtime, language, sha256, doc, symbols[]}. `doc` = leading comment block (capped 200 chars). `symbols` = top-level decl signatures (class/struct/enum/protocol/extension/func/typealias/...). Portable — any LLM can read the JSONL directly via file(action:"read") without calling this tool.
@@ -393,13 +398,16 @@ public enum AgentTools {
         - SPLITTING FILES: read → write new → xcode add_file → edit original → xcode build. One file at a time.
         - "run AgentName" / "run the agent X" → IMMEDIATELY agent_script(action:"run", name:"X"). No list step. Then done.
 
-        MEMORY (memory): Claude-compatible `memory_20250818` filesystem, runs locally. `/memories/*` → ~/Documents/AgentScript/memory/.
+        MEMORY (memory): Claude-compatible `memory_20250818` filesystem, runs locally. Two scopes:
+        - scope:"global" (default) → ~/Documents/AgentScript/memory/     (user-level, shared across projects)
+        - scope:"project"          → {projectFolder}/.agent-memory/      (per-repo, scoped to active folder; errors if no folder set)
+        Commands: view/create/str_replace/insert/delete/rename. All work on either scope via the `scope` arg.
         - view(path:"/memories"): list. view(path:"/memories/x.md"): read. view_range:[1,40] optional.
-        - create(path,file_text): full write (overwrites).
-        - str_replace(path,old_str,new_str): unique-match replace.
-        - insert(path,insert_line,insert_text): before 0-based line (0 = top).
-        - delete(path) | rename(old_path,new_path).
-        START OF TASK: memory(command:"view", path:"/memories") to check saved user context. Write only durable facts — not scratch state.
+        - create(path,file_text,scope?): full write (overwrites).
+        - str_replace(path,old_str,new_str,scope?): unique-match replace.
+        - insert(path,insert_line,insert_text,scope?): before 0-based line (0 = top).
+        - delete(path,scope?) | rename(old_path,new_path,scope?).
+        START OF TASK: view /memories for BOTH scopes — global first, then scope:"project" if a folder is set. Write only durable facts — not scratch state.
 
         PROJECT INDEX (index):
         JSONL repo-map at `{projectFolder}/.agent-index/index.jsonl`. One JSON per file: path/size/lines/mtime/language/sha256/doc/symbols[]. Portable — any LLM can file(read) the JSONL without the index tool.
@@ -1098,9 +1106,10 @@ public enum AgentTools {
         ),
         ToolDef(
             name: "memory",
-            description: "Persistent memory as a tiny filesystem under /memories (Claude memory_20250818 shape). Portable across providers. Commands: view|create|str_replace|insert|delete|rename.",
+            description: "Persistent memory as a tiny filesystem under /memories (Claude memory_20250818 shape). Two scopes: `global` (default, shared across projects) and `project` (scoped to the active project folder). Commands: view|create|str_replace|insert|delete|rename.",
             properties: [
                 "command": ["type": "string", "description": "view|create|str_replace|insert|delete|rename"],
+                "scope": ["type": "string", "description": "global (default, user-level, shared across projects) | project (scoped to the current project folder). Use project for code/notes specific to this repo."],
                 "path": ["type": "string", "description": "Path under /memories (e.g. /memories or /memories/notes.md). view on /memories lists files."],
                 "file_text": ["type": "string", "description": "create: full file contents."],
                 "old_str": ["type": "string", "description": "str_replace: exact text to find (must be unique)."],
