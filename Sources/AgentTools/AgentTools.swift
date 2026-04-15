@@ -214,12 +214,20 @@ public enum AgentTools {
         - After clicking a button that triggers an animation/countdown (Photo Booth, alerts), wait_for_element on the element that should appear next instead of sleeping.
         - Example: "take a photo" → accessibility(action:"open_app", appBundleId:"Photo Booth") → accessibility(action:"click_element", role:"AXButton", title:"Take Photo", appBundleId:"Photo Booth") → done.
 
+        AGENT HIDDEN TREE — `{projectFolder}/.agent/`:
+        Everything the agent writes per-project lives under one hidden directory (covered by a single `.gitignore` entry `.agent/`). Subdirs:
+        - `.agent/index/index.jsonl`  — project index / repo-map (written by the `index` tool).
+        - `.agent/memory/*.md`        — project-scoped memory files (when `memory(scope:"project")` is used).
+        - `.agent/worktrees/<branch>` — git worktrees created via `git(action:"worktree", action:"create")`.
+        - `.agent/plans/plan_*.md`    — plans written by `plan(action:"create")`.
+        Never write random files there; use the dedicated tool for each subdir.
+
         MEMORY (memory) — Claude-compatible /memories filesystem, runs locally:
         The `memory` tool is shaped exactly like Anthropic's `memory_20250818` tool so prompts and agents stay portable across providers. Paths live under the sandbox `/memories/*`. Paths may not escape the sandbox (no `..`).
 
         TWO SCOPES (select via `scope` arg, default `global`):
         - scope:"global"  → ~/Documents/AgentScript/memory/          (USER-LEVEL — shared across every project; preferences, cross-repo feedback, long-term notes)
-        - scope:"project" → {projectFolder}/.agent-memory/           (PROJECT-LEVEL — scoped to the active project folder; build quirks, file layout notes, this-repo conventions)
+        - scope:"project" → {projectFolder}/.agent/memory/           (PROJECT-LEVEL — scoped to the active project folder; build quirks, file layout notes, this-repo conventions)
         `project` scope errors if no project folder is selected. Prefer `project` for anything that only makes sense for this codebase; `global` for facts about the user or conventions that apply everywhere.
 
         COMMANDS (work on either scope):
@@ -235,7 +243,7 @@ public enum AgentTools {
         WHEN TO USE: at the START of any task, call `memory(command:"view", path:"/memories")` for BOTH scopes — global first, then scope:"project" if a project folder is set. Write only durable facts worth surviving across conversations — NOT scratch state for the current task. Project memory is ideal for "how this repo builds", "where config lives", "gotchas observed in this codebase".
 
         PROJECT INDEX (index) — repo-map in the project folder:
-        Writes a portable JSONL file at `{projectFolder}/.agent-index/index.jsonl`. One JSON object per file: {path, size, lines, mtime, language, sha256, doc, symbols[]}. `doc` = leading comment block (capped 200 chars). `symbols` = top-level decl signatures (class/struct/enum/protocol/extension/func/typealias/...). Portable — any LLM can read the JSONL directly via file(action:"read") without calling this tool.
+        Writes a portable JSONL file at `{projectFolder}/.agent/index/index.jsonl`. One JSON object per file: {path, size, lines, mtime, language, sha256, doc, symbols[]}. `doc` = leading comment block (capped 200 chars). `symbols` = top-level decl signatures (class/struct/enum/protocol/extension/func/typealias/...). Portable — any LLM can read the JSONL directly via file(action:"read") without calling this tool.
 
         ACTIONS:
         - create:    scan the project, write a fresh index (errors if one exists — use recreate to force).
@@ -257,7 +265,7 @@ public enum AgentTools {
         - max_file_size: bytes per file (default 1_000_000). Files larger are skipped.
         - offset / limit: pagination for read.
 
-        OTHER LLMS: since the index is plain JSONL at a predictable path, any model (Claude, GPT, Gemini, local) can consume it via `file(action:"read", file_path:".agent-index/index.jsonl")` without needing the `index` tool enabled.
+        OTHER LLMS: since the index is plain JSONL at a predictable path, any model (Claude, GPT, Gemini, local) can consume it via `file(action:"read", file_path:".agent/index/index.jsonl")` without needing the `index` tool enabled.
 
         APPLESCRIPT (applescript) — SDEF FIRST, ALWAYS:
         Every Mac app exposes its OWN AppleScript vocabulary. Pages doesn't speak the same as Music. System Events doesn't speak the same as Finder. Guessing fails 90% of the time and wastes a turn. The lookup_sdef action reads the actual scripting dictionary so you write code that compiles on the FIRST try.
@@ -398,9 +406,11 @@ public enum AgentTools {
         - SPLITTING FILES: read → write new → xcode add_file → edit original → xcode build. One file at a time.
         - "run AgentName" / "run the agent X" → IMMEDIATELY agent_script(action:"run", name:"X"). No list step. Then done.
 
+        AGENT TREE: per-project data at `{projectFolder}/.agent/` — subdirs: index/ (repo-map), memory/ (scope:project notes), worktrees/, plans/. One `.gitignore` entry covers all.
+
         MEMORY (memory): Claude-compatible `memory_20250818` filesystem, runs locally. Two scopes:
         - scope:"global" (default) → ~/Documents/AgentScript/memory/     (user-level, shared across projects)
-        - scope:"project"          → {projectFolder}/.agent-memory/      (per-repo, scoped to active folder; errors if no folder set)
+        - scope:"project"          → {projectFolder}/.agent/memory/      (per-repo, scoped to active folder; errors if no folder set)
         Commands: view/create/str_replace/insert/delete/rename. All work on either scope via the `scope` arg.
         - view(path:"/memories"): list. view(path:"/memories/x.md"): read. view_range:[1,40] optional.
         - create(path,file_text,scope?): full write (overwrites).
@@ -410,7 +420,7 @@ public enum AgentTools {
         START OF TASK: view /memories for BOTH scopes — global first, then scope:"project" if a folder is set. Write only durable facts — not scratch state.
 
         PROJECT INDEX (index):
-        JSONL repo-map at `{projectFolder}/.agent-index/index.jsonl`. One JSON per file: path/size/lines/mtime/language/sha256/doc/symbols[]. Portable — any LLM can file(read) the JSONL without the index tool.
+        JSONL repo-map at `{projectFolder}/.agent/index/index.jsonl`. One JSON per file: path/size/lines/mtime/language/sha256/doc/symbols[]. Portable — any LLM can file(read) the JSONL without the index tool.
         - index(create): fresh scan (errors if exists).
         - index(read, offset, limit): paginated JSONL.
         - index(append): add new/changed, drop stale. Use after edits.
@@ -1094,7 +1104,7 @@ public enum AgentTools {
         ),
         ToolDef(
             name: Name.index,
-            description: "Project index / repo-map. Writes .agent-index/index.jsonl — one JSON per file: {path,size,lines,mtime,language,sha256,doc,symbols[]}. Doc = leading comment block. Symbols = top-level decls (class/struct/func/etc). Portable — any LLM can read_file the JSONL directly. Actions: create|read|remove|recreate|append|continue.",
+            description: "Project index / repo-map. Writes .agent/index/index.jsonl — one JSON per file: {path,size,lines,mtime,language,sha256,doc,symbols[]}. Doc = leading comment block. Symbols = top-level decls (class/struct/func/etc). Portable — any LLM can read_file the JSONL directly. Actions: create|read|remove|recreate|append|continue.",
             properties: [
                 "action": ["type": "string", "description": "create|read|remove|recreate|append|continue"],
                 "extensions": ["type": "string", "description": "Optional comma-separated file extensions to include (e.g. swift,md,plist). Defaults to common code/text types."],
