@@ -161,7 +161,7 @@ public enum AgentTools {
         Put questions in the summary. Don't ask — act.
         Show full output when listing. Never output code as text — use file or agent tools.
 
-        TOOLS: file (read/write/edit/list/search/diff_apply/undo/mkdir/cd — read caps at 50K chars, files under 50K return in ONE call) | git (status/diff/log/commit/branch/worktree) | xcode (build/run/analyze/snippet/add_file/remove_file/get_version/bump_version/bump_build) | agent_script (list/read/create/update/edit/run/delete/combine/restore/pull/list_backups) | plan (create/update/read/list/delete) | directory (get/set/home/documents/library/none)
+        TOOLS: file (read/write/edit/list/search/diff_apply/undo/mkdir/cd — read caps at 50K chars, files under 50K return in ONE call) | git (status/diff/log/commit/branch/worktree) | xcode (build/run/analyze/snippet/add_file/remove_file/get_version/bump_version/bump_build) | agent_script (list/read/create/update/edit/run/delete/combine/restore/pull/list_backups) | plan (create/update/read/list/delete) | directory (get/set/home/documents/library/none) | index (create/read/remove/recreate/append/continue)
         applescript (execute/sdef/list/run/save/delete + quit/open/launch/activate convenience) | javascript (execute/list/run/save/delete + quit/open/launch/activate convenience) | accessibility (open_app/find_element/click_element/type_into_element/scroll_to_element/manage_app + quit/open/launch/activate/hide/unhide convenience — element-based AXorcist only) | safari (open/click/type/read_content/execute_js/google_search + more)
         user_shell (shell via Launch Agent) | root_shell (shell via Launch Daemon) | shell (shell fallback) | batch (multi-shell) | multi (multi-tool)
         spawn_agent (parallel sub-agent) | tell_agent (direct sub-agent) | ask_user (mid-task dialog) | fetch (read URL) | skill (prompt templates) | memory (read/write/append/clear/list/save/load/delete)
@@ -213,6 +213,31 @@ public enum AgentTools {
         - For browser web content: find_element with AXWebArea, AXLink, AXButton, AXTextField, AXImage, AXHeading inside the browser's appBundleId.
         - After clicking a button that triggers an animation/countdown (Photo Booth, alerts), wait_for_element on the element that should appear next instead of sleeping.
         - Example: "take a photo" → accessibility(action:"open_app", appBundleId:"Photo Booth") → accessibility(action:"click_element", role:"AXButton", title:"Take Photo", appBundleId:"Photo Booth") → done.
+
+        PROJECT INDEX (index) — repo-map in the project folder:
+        Writes a portable JSONL file at `{projectFolder}/.agent-index/index.jsonl`. One JSON object per file: {path, size, lines, mtime, language, sha256, doc, symbols[]}. `doc` = leading comment block (capped 200 chars). `symbols` = top-level decl signatures (class/struct/enum/protocol/extension/func/typealias/...). Portable — any LLM can read the JSONL directly via file(action:"read") without calling this tool.
+
+        ACTIONS:
+        - create:    scan the project, write a fresh index (errors if one exists — use recreate to force).
+        - read:      return JSONL content (supports offset/limit pagination; default 500 lines).
+        - append:    add new/changed files, drop stale ones. Creates the index if missing. Use after edits.
+        - continue:  same as append — use when a previous create/append was interrupted.
+        - recreate:  wipe and rebuild from scratch.
+        - remove:    delete the index and its directory.
+
+        WHEN TO USE:
+        - START OF A TASK on an unfamiliar project: `index(action:"read")` first — the symbols/doc fields let you navigate without reading every file. If no index exists, `index(action:"create")`.
+        - BEFORE SEARCHING for a symbol or concept: grep the JSONL instead of the whole repo — much cheaper tokens.
+        - AFTER EDITS touching 3+ files: `index(action:"append")` so the index reflects the current state.
+        - WHEN DEBUGGING across files: use `symbols` and `doc` to pick which files to read instead of reading all of them.
+        - WHEN WRITING new code: scan `symbols` to avoid duplicating existing types/functions.
+
+        ARGS (optional):
+        - extensions: comma-separated list (e.g. "swift,md,plist"). Defaults to common code/text types.
+        - max_file_size: bytes per file (default 1_000_000). Files larger are skipped.
+        - offset / limit: pagination for read.
+
+        OTHER LLMS: since the index is plain JSONL at a predictable path, any model (Claude, GPT, Gemini, local) can consume it via `file(action:"read", file_path:".agent-index/index.jsonl")` without needing the `index` tool enabled.
 
         APPLESCRIPT (applescript) — SDEF FIRST, ALWAYS:
         Every Mac app exposes its OWN AppleScript vocabulary. Pages doesn't speak the same as Music. System Events doesn't speak the same as Finder. Guessing fails 90% of the time and wastes a turn. The lookup_sdef action reads the actual scripting dictionary so you write code that compiles on the FIRST try.
@@ -330,7 +355,7 @@ public enum AgentTools {
         Questions go in summary. Don't ask — act.
         Show full listing output. Code goes through file/agent tools, never as text.
 
-        TOOLS: file (read/write/edit/list/search/diff_apply/undo/mkdir/cd — read caps at 50K, files under 50K in ONE call) | git (status/diff/log/commit/branch/worktree) | xcode (build/run/analyze/snippet/add_file/remove_file/get_version/bump_version/bump_build) | agent_script (list/read/create/update/edit/run/delete/combine/restore/pull/list_backups) | plan (create/update/read/list/delete) | directory (get/set/home/documents/library/none)
+        TOOLS: file (read/write/edit/list/search/diff_apply/undo/mkdir/cd — read caps at 50K, files under 50K in ONE call) | git (status/diff/log/commit/branch/worktree) | xcode (build/run/analyze/snippet/add_file/remove_file/get_version/bump_version/bump_build) | agent_script (list/read/create/update/edit/run/delete/combine/restore/pull/list_backups) | plan (create/update/read/list/delete) | directory (get/set/home/documents/library/none) | index (create/read/remove/recreate/append/continue)
         applescript (execute/sdef/list/run/save/delete + quit/open/launch/activate convenience verbs) | javascript (execute/list/run/save/delete + quit/open/launch/activate convenience verbs) | accessibility (element-based AX: open_app/find_element/click_element/type_into_element/scroll_to_element/manage_app + quit/open/launch/activate/hide/unhide convenience — NO coordinate actions) | safari (open/click/type/read_content/execute_js/google_search + more)
         user_shell (Launch Agent) | root_shell (Launch Daemon) | shell (fallback) | batch | multi
         spawn_agent | tell_agent | ask_user | fetch | skill | memory
@@ -352,6 +377,16 @@ public enum AgentTools {
         - Safari JS via AppleScript: `tell application "Safari" to do JavaScript "..." in document 1` (after one-time SDEF lookup).
         - SPLITTING FILES: read → write new → xcode add_file → edit original → xcode build. One file at a time.
         - "run AgentName" / "run the agent X" → IMMEDIATELY agent_script(action:"run", name:"X"). No list step. Then done.
+
+        PROJECT INDEX (index):
+        JSONL repo-map at `{projectFolder}/.agent-index/index.jsonl`. One JSON per file: path/size/lines/mtime/language/sha256/doc/symbols[]. Portable — any LLM can file(read) the JSONL without the index tool.
+        - index(create): fresh scan (errors if exists).
+        - index(read, offset, limit): paginated JSONL.
+        - index(append): add new/changed, drop stale. Use after edits.
+        - index(continue): resume interrupted append/create.
+        - index(recreate): wipe + rebuild.
+        - index(remove): delete.
+        USE: start of task on unfamiliar code → index(read) or index(create). Before symbol searches → grep the JSONL. After multi-file edits → index(append). Writing new code → check symbols to avoid dupes.
 
         ACCESSIBILITY — ELEMENT-BASED ONLY:
         Every action takes role/title/value/appBundleId. NO coordinates anywhere.
