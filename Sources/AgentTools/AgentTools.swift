@@ -1028,7 +1028,7 @@ public enum AgentTools {
         ),
         ToolDef(
             name: Name.index,
-            description: "Project index. Writes .agent-index/index.jsonl in the project folder — one JSON object per file ({path,size,mtime,language,sha256}). Portable: any LLM can read_file it. Actions: create|read|remove|recreate|append|continue.",
+            description: "Project index / repo-map. Writes .agent-index/index.jsonl — one JSON per file: {path,size,lines,mtime,language,sha256,doc,symbols[]}. Doc = leading comment block. Symbols = top-level decls (class/struct/func/etc). Portable — any LLM can read_file the JSONL directly. Actions: create|read|remove|recreate|append|continue.",
             properties: [
                 "action": ["type": "string", "description": "create|read|remove|recreate|append|continue"],
                 "extensions": ["type": "string", "description": "Optional comma-separated file extensions to include (e.g. swift,md,plist). Defaults to common code/text types."],
