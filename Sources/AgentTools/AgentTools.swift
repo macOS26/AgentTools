@@ -164,7 +164,7 @@ public enum AgentTools {
         TOOLS: file (read/write/edit/list/search/diff_apply/undo/mkdir/cd — read caps at 50K chars, files under 50K return in ONE call) | git (status/diff/log/commit/branch/worktree) | xcode (build/run/analyze/snippet/add_file/remove_file/get_version/bump_version/bump_build) | agent_script (list/read/create/update/edit/run/delete/combine/restore/pull/list_backups) | plan (create/update/read/list/delete) | directory (get/set/home/documents/library/none) | index (create/read/remove/recreate/append/continue)
         applescript (execute/sdef/list/run/save/delete + quit/open/launch/activate convenience) | javascript (execute/list/run/save/delete + quit/open/launch/activate convenience) | accessibility (open_app/find_element/click_element/type_into_element/scroll_to_element/manage_app + quit/open/launch/activate/hide/unhide convenience — element-based AXorcist only) | safari (open/click/type/read_content/execute_js/google_search + more)
         user_shell (shell via Launch Agent) | root_shell (shell via Launch Daemon) | shell (shell fallback) | batch (multi-shell) | multi (multi-tool)
-        spawn_agent (parallel sub-agent) | tell_agent (direct sub-agent) | ask_user (mid-task dialog) | fetch (read URL) | skill (prompt templates) | memory (read/write/append/clear/list/save/load/delete)
+        spawn_agent (parallel sub-agent) | tell_agent (direct sub-agent) | ask_user (mid-task dialog) | fetch (read URL) | skill (prompt templates) | memory (view/create/str_replace/insert/delete/rename — Claude-compatible /memories filesystem)
         MCP: Agent! has full MCP (Model Context Protocol) support via AgentMCP. MCP servers extend Agent!'s capabilities with additional tools. MCP tools are prefixed with mcp_.
 
         RULES:
@@ -213,6 +213,21 @@ public enum AgentTools {
         - For browser web content: find_element with AXWebArea, AXLink, AXButton, AXTextField, AXImage, AXHeading inside the browser's appBundleId.
         - After clicking a button that triggers an animation/countdown (Photo Booth, alerts), wait_for_element on the element that should appear next instead of sleeping.
         - Example: "take a photo" → accessibility(action:"open_app", appBundleId:"Photo Booth") → accessibility(action:"click_element", role:"AXButton", title:"Take Photo", appBundleId:"Photo Booth") → done.
+
+        MEMORY (memory) — Claude-compatible /memories filesystem, runs locally:
+        The `memory` tool is shaped exactly like Anthropic's `memory_20250818` tool so prompts and agents stay portable across providers. Files live under the sandbox path `/memories/*` which maps to ~/Documents/AgentScript/memory/ on disk. Paths may not escape the sandbox (no `..`).
+
+        COMMANDS:
+        - view:        memory(command:"view", path:"/memories")                                  → lists files.
+                        memory(command:"view", path:"/memories/notes.md")                        → file contents.
+                        memory(command:"view", path:"/memories/notes.md", view_range:[1,40])     → partial (1-based inclusive; -1 = to end).
+        - create:      memory(command:"create", path:"/memories/x.md", file_text:"…")            → full-file write (overwrites).
+        - str_replace: memory(command:"str_replace", path:"/memories/x.md", old_str:"…", new_str:"…") → unique-match replace. Fails if 0 or >1 matches.
+        - insert:      memory(command:"insert", path:"/memories/x.md", insert_line:0, insert_text:"…") → insert BEFORE line (0 = top, N = after last).
+        - delete:      memory(command:"delete", path:"/memories/x.md")                           → remove a file.
+        - rename:      memory(command:"rename", old_path:"/memories/a.md", new_path:"/memories/b.md")
+
+        WHEN TO USE: at the START of any task, call `memory(command:"view", path:"/memories")` to see if the user has relevant saved context (preferences, prior decisions, feedback). Write to memory only for durable facts worth surviving across conversations — NOT scratch state for the current task.
 
         PROJECT INDEX (index) — repo-map in the project folder:
         Writes a portable JSONL file at `{projectFolder}/.agent-index/index.jsonl`. One JSON object per file: {path, size, lines, mtime, language, sha256, doc, symbols[]}. `doc` = leading comment block (capped 200 chars). `symbols` = top-level decl signatures (class/struct/enum/protocol/extension/func/typealias/...). Portable — any LLM can read the JSONL directly via file(action:"read") without calling this tool.
@@ -358,7 +373,7 @@ public enum AgentTools {
         TOOLS: file (read/write/edit/list/search/diff_apply/undo/mkdir/cd — read caps at 50K, files under 50K in ONE call) | git (status/diff/log/commit/branch/worktree) | xcode (build/run/analyze/snippet/add_file/remove_file/get_version/bump_version/bump_build) | agent_script (list/read/create/update/edit/run/delete/combine/restore/pull/list_backups) | plan (create/update/read/list/delete) | directory (get/set/home/documents/library/none) | index (create/read/remove/recreate/append/continue)
         applescript (execute/sdef/list/run/save/delete + quit/open/launch/activate convenience verbs) | javascript (execute/list/run/save/delete + quit/open/launch/activate convenience verbs) | accessibility (element-based AX: open_app/find_element/click_element/type_into_element/scroll_to_element/manage_app + quit/open/launch/activate/hide/unhide convenience — NO coordinate actions) | safari (open/click/type/read_content/execute_js/google_search + more)
         user_shell (Launch Agent) | root_shell (Launch Daemon) | shell (fallback) | batch | multi
-        spawn_agent | tell_agent | ask_user | fetch | skill | memory
+        spawn_agent | tell_agent | ask_user | fetch | skill | memory (view/create/str_replace/insert/delete/rename — /memories filesystem, Claude-compatible)
         MCP: full Model Context Protocol support via AgentMCP. MCP tools prefixed mcp_.
 
         RULES:
@@ -377,6 +392,14 @@ public enum AgentTools {
         - Safari JS via AppleScript: `tell application "Safari" to do JavaScript "..." in document 1` (after one-time SDEF lookup).
         - SPLITTING FILES: read → write new → xcode add_file → edit original → xcode build. One file at a time.
         - "run AgentName" / "run the agent X" → IMMEDIATELY agent_script(action:"run", name:"X"). No list step. Then done.
+
+        MEMORY (memory): Claude-compatible `memory_20250818` filesystem, runs locally. `/memories/*` → ~/Documents/AgentScript/memory/.
+        - view(path:"/memories"): list. view(path:"/memories/x.md"): read. view_range:[1,40] optional.
+        - create(path,file_text): full write (overwrites).
+        - str_replace(path,old_str,new_str): unique-match replace.
+        - insert(path,insert_line,insert_text): before 0-based line (0 = top).
+        - delete(path) | rename(old_path,new_path).
+        START OF TASK: memory(command:"view", path:"/memories") to check saved user context. Write only durable facts — not scratch state.
 
         PROJECT INDEX (index):
         JSONL repo-map at `{projectFolder}/.agent-index/index.jsonl`. One JSON per file: path/size/lines/mtime/language/sha256/doc/symbols[]. Portable — any LLM can file(read) the JSONL without the index tool.
@@ -1075,12 +1098,20 @@ public enum AgentTools {
         ),
         ToolDef(
             name: "memory",
-            description: "Persistent user preferences. 'remember X' → append.",
+            description: "Persistent memory as a tiny filesystem under /memories (Claude memory_20250818 shape). Portable across providers. Commands: view|create|str_replace|insert|delete|rename.",
             properties: [
-                "action": ["type": "string", "description": "read|write|append|clear"],
-                "text": ["type": "string", "description": "write/append: text"],
+                "command": ["type": "string", "description": "view|create|str_replace|insert|delete|rename"],
+                "path": ["type": "string", "description": "Path under /memories (e.g. /memories or /memories/notes.md). view on /memories lists files."],
+                "file_text": ["type": "string", "description": "create: full file contents."],
+                "old_str": ["type": "string", "description": "str_replace: exact text to find (must be unique)."],
+                "new_str": ["type": "string", "description": "str_replace: replacement text."],
+                "insert_line": ["type": "integer", "description": "insert: 0-based line index to insert BEFORE (0 = top, N = after last line)."],
+                "insert_text": ["type": "string", "description": "insert: text to insert (newlines allowed)."],
+                "view_range": ["type": "array", "items": ["type": "integer"] as [String: Any], "description": "view: optional [start, end] 1-based inclusive line range; -1 for end means 'to end of file'."] as [String: Any],
+                "old_path": ["type": "string", "description": "rename: source path under /memories."],
+                "new_path": ["type": "string", "description": "rename: destination path under /memories."],
             ],
-            required: ["action"]
+            required: ["command"]
         ),
     ]
 
