@@ -197,15 +197,22 @@ public enum AgentTools {
         - Real bundle ID like "com.apple.PhotoBooth" — passed through unchanged.
         DO NOT memorize bundle IDs. The resolver knows about every .app bundle in /Applications, /System/Applications, ~/Applications, and every app with a scripting dictionary in the SDEF catalog. If you don't know an app's name, call accessibility(action:"manage_app", sub_action:"list") to enumerate running apps.
 
-        FAST PATH (ONE tool call, then task_complete): go straight to
-        click_element. The dispatcher auto-launches the app if it isn't
-        running, and if your guessed title doesn't match, it fuzzy-matches
-        against the app's real buttons and auto-retries — the response
-        wraps as `{auto_retry:{requested_title, matched_title}, result}`.
-        Skip open_app and find_element entirely for common UI clicks.
-        Only call open_app when you need to SEE the element tree of an
-        unfamiliar app; only call find_element when you didn't just click
-        and the auto-retry message needs a closer look.
+        FAST PATH — MANDATORY FOR SIMPLE UI TASKS:
+        1. Call click_element (or type_into_element) with your best-guess title.
+        2. If response has `"success":true` → call task_complete. DONE.
+        No open_app first. No find_element first. No shell verification after.
+
+        The dispatcher does three things automatically:
+          • auto-launches the app if it isn't running
+          • fuzzy-matches + auto-retries if your title is off (response wraps
+            as `{auto_retry:{requested_title, matched_title}, result}`)
+          • returns `success:true` ONLY when the action genuinely happened
+        When you see `success:true`, the action IS done. Stop. Call task_complete.
+        Do NOT `ls`, `find`, `sleep && ls`, or otherwise poll the filesystem
+        to "verify" a UI action — the AX response already did that.
+
+        Only reach for open_app / find_element when the app is unfamiliar and
+        you genuinely do not know what element to click (rare).
 
         TYPICAL WORKFLOWS:
         - Click a button (FAST, app may or may not be running):
@@ -221,6 +228,7 @@ public enum AgentTools {
         RULES:
         - NEVER call perform_action with AXPress — use click_element, it handles every click variant.
         - NEVER list_windows / screenshot / find_element / open_app as a scouting step before click_element. The dispatcher auto-launches and auto-retries — one turn is enough for the common case.
+        - NEVER follow a successful UI action with a shell command (ls, find, sleep, stat, etc.) to "confirm" it happened. `success:true` from the AX layer is the confirmation. Go straight to task_complete.
         - For browser web content: find_element with AXWebArea, AXLink, AXButton, AXTextField, AXImage, AXHeading inside the browser's appBundleId.
         - After clicking a button that triggers an animation/countdown (Photo Booth, alerts), wait_for_element on the element that should appear next instead of sleeping.
         - Example: "take a photo using Photo Booth" → accessibility(action:"click_element", role:"AXButton", title:"Take Photo", appBundleId:"Photo Booth") (auto-launches + auto-retries "take photo") → task_complete. ONE tool call.
