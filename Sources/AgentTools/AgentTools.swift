@@ -197,8 +197,19 @@ public enum AgentTools {
         - Real bundle ID like "com.apple.PhotoBooth" — passed through unchanged.
         DO NOT memorize bundle IDs. The resolver knows about every .app bundle in /Applications, /System/Applications, ~/Applications, and every app with a scripting dictionary in the SDEF catalog. If you don't know an app's name, call accessibility(action:"manage_app", sub_action:"list") to enumerate running apps.
 
+        DISCOVERY-FIRST — button labels are often unexpected. Photo Booth's
+        camera button is AXDescription "take photo" (lowercase), NOT "Take
+        Picture". If you're guessing the label, do one discovery call before
+        clicking: find_element(role:"AXButton", appBundleId:"<app>") with NO
+        title surfaces the real AXTitle/AXDescription. Then click_element with
+        the exact string returned. Skip discovery only when you're certain of
+        the label (documented shortcut, you just read it with find_element,
+        etc.). If click_element returns "not found", the dispatcher auto-scans
+        the app's elements of that role and retries with the closest fuzzy
+        match — the result will include `auto_retry` showing what it matched.
+
         TYPICAL WORKFLOWS:
-        - Click a button: accessibility(action:"click_element", role:"AXButton", title:"Take Photo", appBundleId:"Photo Booth")
+        - Click a button: accessibility(action:"click_element", role:"AXButton", title:"<exact label>", appBundleId:"Photo Booth")
         - Type into a field: accessibility(action:"type_into_element", role:"AXTextField", title:"Search", text:"hello", appBundleId:"Safari")
         - Open an app: accessibility(action:"open_app", appBundleId:"Safari") — opens/activates AND returns elements in one call
         - Read what's on screen: accessibility(action:"find_element", role:..., title:..., appBundleId:...) returns the element's full property dump
@@ -212,7 +223,7 @@ public enum AgentTools {
         - NEVER list_windows / screenshot just to figure out where to click. Go straight to find_element / click_element by role+title.
         - For browser web content: find_element with AXWebArea, AXLink, AXButton, AXTextField, AXImage, AXHeading inside the browser's appBundleId.
         - After clicking a button that triggers an animation/countdown (Photo Booth, alerts), wait_for_element on the element that should appear next instead of sleeping.
-        - Example: "take a photo" → accessibility(action:"open_app", appBundleId:"Photo Booth") → accessibility(action:"click_element", role:"AXButton", title:"Take Photo", appBundleId:"Photo Booth") → done.
+        - Example: "take a photo" → accessibility(action:"open_app", appBundleId:"Photo Booth") → accessibility(action:"find_element", role:"AXButton", appBundleId:"Photo Booth") (discover actual label) → accessibility(action:"click_element", role:"AXButton", title:"take photo", appBundleId:"Photo Booth") → done.
 
         AGENT HIDDEN TREE — `{projectFolder}/.agent/`:
         Everything the agent writes per-project lives under one hidden directory (covered by a single `.gitignore` entry `.agent/`). Subdirs:
