@@ -197,19 +197,22 @@ public enum AgentTools {
         - Real bundle ID like "com.apple.PhotoBooth" — passed through unchanged.
         DO NOT memorize bundle IDs. The resolver knows about every .app bundle in /Applications, /System/Applications, ~/Applications, and every app with a scripting dictionary in the SDEF catalog. If you don't know an app's name, call accessibility(action:"manage_app", sub_action:"list") to enumerate running apps.
 
-        FAST PATH (2 turns, not 3): open_app returns the full interactive
-        element tree in one call — you already see every button's real
-        AXTitle/AXDescription. Never call find_element after open_app; just
-        pick the title from the response and click_element. If you guess
-        wrong, the dispatcher fuzzy-matches and auto-retries (result wraps
-        in `auto_retry`). Only reach for find_element when you did NOT just
-        open the app (e.g. the app was already running and you skipped open).
+        FAST PATH (ONE tool call, then task_complete): go straight to
+        click_element. The dispatcher auto-launches the app if it isn't
+        running, and if your guessed title doesn't match, it fuzzy-matches
+        against the app's real buttons and auto-retries — the response
+        wraps as `{auto_retry:{requested_title, matched_title}, result}`.
+        Skip open_app and find_element entirely for common UI clicks.
+        Only call open_app when you need to SEE the element tree of an
+        unfamiliar app; only call find_element when you didn't just click
+        and the auto-retry message needs a closer look.
 
         TYPICAL WORKFLOWS:
-        - Open app + see elements: accessibility(action:"open_app", appBundleId:"Photo Booth") — returns `elements` array with every AXTitle/AXDescription. Read it, then click.
-        - Click a button: accessibility(action:"click_element", role:"AXButton", title:"<label from open_app>", appBundleId:"Photo Booth")
+        - Click a button (FAST, app may or may not be running):
+            accessibility(action:"click_element", role:"AXButton", title:"Take Photo", appBundleId:"Photo Booth")
         - Type into a field: accessibility(action:"type_into_element", role:"AXTextField", title:"Search", text:"hello", appBundleId:"Safari")
-        - Read what's on screen (without opening): accessibility(action:"find_element", role:..., title:..., appBundleId:...) returns the element's full property dump
+        - Discover elements in an unfamiliar app: accessibility(action:"open_app", appBundleId:"<App>") returns `elements` array with every AXTitle/AXDescription.
+        - Find specific element without opening: accessibility(action:"find_element", role:..., title:..., appBundleId:...) returns the element's full property dump
         - Scroll until something is visible: accessibility(action:"scroll_to_element", role:..., title:..., appBundleId:...) walks the scroll area until the target appears
         - Invoke a menu command (replaces keyboard shortcuts): accessibility(action:"click_menu_item", appBundleId:..., menuPath:"File > Save")
         - Move/resize a window: accessibility(action:"set_window_frame", appBundleId:..., x:0, y:0, width:1280, height:800)
@@ -217,10 +220,10 @@ public enum AgentTools {
 
         RULES:
         - NEVER call perform_action with AXPress — use click_element, it handles every click variant.
-        - NEVER list_windows / screenshot / find_element just to figure out where to click RIGHT AFTER open_app — the element tree is already in the response.
+        - NEVER list_windows / screenshot / find_element / open_app as a scouting step before click_element. The dispatcher auto-launches and auto-retries — one turn is enough for the common case.
         - For browser web content: find_element with AXWebArea, AXLink, AXButton, AXTextField, AXImage, AXHeading inside the browser's appBundleId.
         - After clicking a button that triggers an animation/countdown (Photo Booth, alerts), wait_for_element on the element that should appear next instead of sleeping.
-        - Example: "take a photo" → accessibility(action:"open_app", appBundleId:"Photo Booth") (response has the camera button's AXDescription "take photo") → accessibility(action:"click_element", role:"AXButton", title:"take photo", appBundleId:"Photo Booth") → done. TWO turns, not three.
+        - Example: "take a photo using Photo Booth" → accessibility(action:"click_element", role:"AXButton", title:"Take Photo", appBundleId:"Photo Booth") (auto-launches + auto-retries "take photo") → task_complete. ONE tool call.
 
         AGENT HIDDEN TREE — `{projectFolder}/.agent/`:
         Everything the agent writes per-project lives under one hidden directory (covered by a single `.gitignore` entry `.agent/`). Subdirs:
