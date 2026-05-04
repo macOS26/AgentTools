@@ -184,6 +184,7 @@ public enum AgentTools {
         - Safari JS via AppleScript preferred for web: `tell application "Safari" to do JavaScript "..." in document 1` (after looking up Safari's SDEF once).
         - SPLITTING FILES: read → write new → xcode add_file → edit original → xcode build. One file at a time.
         - "run AgentName" or "run the agent X" → IMMEDIATELY call agent_script(action:"run", name:"X"). Do NOT list first. After running, report the result and call done.
+        - SUB-AGENTS: prefer spawn_agent for independent searches/research and for multiple lookups that can run in parallel — keeps your main context clean and runs up to 3 concurrent. Use tell_agent to follow up on one already running. Skip for direct edits or work tied to your current state.
 
         ACCESSIBILITY (accessibility) — ELEMENT-BASED ONLY:
         Every accessibility action takes role/title/value/appBundleId. There are
@@ -424,6 +425,7 @@ public enum AgentTools {
         - Safari JS via AppleScript: `tell application "Safari" to do JavaScript "..." in document 1` (after one-time SDEF lookup).
         - SPLITTING FILES: read → write new → xcode add_file → edit original → xcode build. One file at a time.
         - "run AgentName" / "run the agent X" → IMMEDIATELY agent_script(action:"run", name:"X"). No list step. Then done.
+        - SUB-AGENTS: spawn_agent for independent searches/parallel lookups (max 3) — keeps main context clean. tell_agent to follow up. Skip for edits or state-tied work.
 
         AGENT TREE: per-project data at `{projectFolder}/.agent/` — subdirs: index/ (repo-map), memory/ (scope:project notes), worktrees/, plans/. One `.gitignore` entry covers all.
 
@@ -855,20 +857,20 @@ public enum AgentTools {
         // --- Agent Tools (sub-agents, messaging, questions) ---
         ToolDef(
             name: "spawn_agent",
-            description: "Spawn isolated sub-agent. Max 3 concurrent.",
+            description: "Spawn isolated sub-agent (own context + tool loop, max 3 concurrent). USE FOR: independent searches/research that return a summary; multiple lookups you want to run in parallel; long exploration whose intermediate steps don't need to enter your context. SKIP FOR: edits, work tied to your current state, anything where you must see every step. Prompt must be self-contained — sub-agent has no parent context.",
             properties: [
-                "name": ["type": "string", "description": "Agent name"],
-                "prompt": ["type": "string", "description": "Complete task (agent has no parent context)"],
-                "tools": ["type": "string", "description": "all|coding|automation|<groups>"],
+                "name": ["type": "string", "description": "Agent name (defaults to agent-N)"],
+                "prompt": ["type": "string", "description": "Complete self-contained task. The sub-agent sees ONLY this — no parent context, no prior messages. Include all file paths, constraints, and what to return."],
+                "tools": ["type": "string", "description": "all | comma-separated group names (Core,Code,User,Auto,Work,Root,Sub-agents). Narrow to keep the sub-agent focused."],
                 "max_iterations": ["type": "integer", "description": "Max LLM turns (default 15)"],
             ],
             required: ["prompt"]
         ),
         ToolDef(
             name: "tell_agent",
-            description: "Message a running sub-agent.",
+            description: "Send a follow-up message to a sub-agent already spawned via spawn_agent. USE FOR: refining its task, supplying new info, or asking for clarification mid-run. Useless before spawn_agent — there's no one to message.",
             properties: [
-                "to": ["type": "string", "description": "Agent name or ID"],
+                "to": ["type": "string", "description": "Sub-agent name or ID returned by spawn_agent"],
                 "message": ["type": "string", "description": "Message content"],
             ],
             required: ["to", "message"]
