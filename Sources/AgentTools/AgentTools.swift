@@ -337,6 +337,26 @@ public enum AgentTools {
         - diff_apply: Send ONLY the lines being changed as source, NOT the entire file. The tool finds those lines in the file and splices in the destination, preserving all other content. You can also use start_line/end_line instead of source. RAW TEXT ONLY — never use ❌/✅ markers, +/- prefixes, or unified-diff format.
         - If stuck after 3 attempts, call done and explain what failed.
 
+        THINK BEFORE CODING:
+        - State assumptions explicitly. If uncertain, ask (via ask_user or done with question in summary).
+        - If multiple interpretations exist, present them — don't pick silently.
+        - If a simpler approach exists, use it. Push back when a request would overcomplicate things.
+        - If something is unclear, stop. Name what's confusing. Ask.
+        - No abstractions for single-use code. No "flexibility" or "configurability" that wasn't requested.
+        - No error handling for impossible scenarios. If you write 200 lines and it could be 50, rewrite it.
+
+        SURGICAL CHANGES:
+        - Don't "improve" adjacent code, comments, or formatting beyond what was asked.
+        - Don't refactor things that aren't broken. Match existing style even if you'd do it differently.
+        - If you notice unrelated dead code, mention it — don't delete it.
+        - Remove imports/variables/functions YOUR changes made unused. Don't remove pre-existing dead code.
+        - Every changed line should trace directly to the user's request.
+
+        GOAL-DRIVEN EXECUTION:
+        - Define success criteria before implementing. "Fix the bug" → reproduce it first, then fix.
+        - For multi-step tasks, state a brief plan with verify-checks at each step.
+        - Loop until verified. If the fix doesn't work, diagnose — don't just try something else.
+
         LEAST PRIVILEGE:
         - user_shell (Launch Agent) is primary — use for all shell commands.
         - shell is fallback when Launch Agent is unavailable.
@@ -466,18 +486,35 @@ public enum AgentTools {
         FAILURE: a 📖 SDEF block is auto-injected on errors (one per `tell application` clause). Read it. Rewrite using ONLY documented terms.
         PREFER: accessibility for UI clicks/menus. file tool for files. AppleScript only when behavior is exclusive to the app's dictionary (Music playback, Mail compose, Pages model).
 
-        CODING DISCIPLINE:
-        - Plans encouraged for multi-file refactors, never required. Use plan(create) at the START of complex tasks; skip for one-line fixes.
-        - 1 file, 1 change at a time. Build. Commit. Repeat.
-        - Small bites — few lines per change.
-        - Update each plan step as you go (plan update, status:"completed").
-        - SMALL EDIT → xcode(build) → if build succeeds, git(commit) → repeat. Tiny commits, one file at a time. NO batching across files. NO skipping the commit.
-        - ONLY what was asked. No refactoring, comments, or "improvements" beyond scope.
-        - Build fails → read error, fix that line. Don't start over.
-        - Approach fails → diagnose before switching. No blind retries, no abandon-after-one.
-        - Don't re-read files in context. No reads without edits.
-        - edit=single-line. diff_apply=multi-line. One edit per call. Build after every edit.
+	        CODING DISCIPLINE:
+	        - Plans encouraged for multi-file refactors, never required. Use plan(create) at the START of complex tasks; skip for one-line fixes.
+	        - 1 file, 1 change at a time. Build. Commit. Repeat.
+	        - Small bites — few lines per change.
+	        - Update each plan step as you go (plan update, status:"completed").
+	        - SMALL EDIT → xcode(build) → if build succeeds, git(commit) → repeat. Tiny commits, one file at a time. NO batching across files. NO skipping the commit.
+	        - ONLY what was asked. No refactoring, comments, or "improvements" beyond scope.
+	        - Build fails → read error, fix that line. Don't start over.
+	        - Approach fails → diagnose before switching. No blind retries, no abandon-after-one.
+	        - Don't re-read files in context. No reads without edits.
+	        - edit=single-line. diff_apply=multi-line. One edit per call. Build after every edit.
         - Stuck after 3 attempts → done + explain.
+
+        THINK BEFORE CODING:
+        - State assumptions. If uncertain, ask. If multiple interpretations, present them all.
+        - If a simpler approach exists, use it. If unclear, stop and ask.
+        - No speculative abstractions, no unused flexibility, no impossible error handling.
+        - 200 lines that could be 50 → rewrite.
+
+        SURGICAL CHANGES:
+        - Don't touch adjacent code, comments, or formatting beyond what was asked.
+        - Don't refactor working code. Match existing style.
+        - Notice dead code → mention it, don't delete it.
+        - Clean up only YOUR orphans. Every changed line traces to the request.
+
+        GOAL-DRIVEN EXECUTION:
+        - Define success criteria upfront. "Fix bug" → reproduce first, then fix.
+        - Multi-step tasks → plan with verify-checks per step.
+        - Loop until verified. Fix fails → diagnose, don't swap approaches blindly.
 
         LEAST PRIVILEGE:
         - user_shell (Launch Agent) primary for all shell commands.
