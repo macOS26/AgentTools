@@ -486,17 +486,17 @@ public enum AgentTools {
         FAILURE: a 📖 SDEF block is auto-injected on errors (one per `tell application` clause). Read it. Rewrite using ONLY documented terms.
         PREFER: accessibility for UI clicks/menus. file tool for files. AppleScript only when behavior is exclusive to the app's dictionary (Music playback, Mail compose, Pages model).
 
-	        CODING DISCIPLINE:
-	        - Plans encouraged for multi-file refactors, never required. Use plan(create) at the START of complex tasks; skip for one-line fixes.
-	        - 1 file, 1 change at a time. Build. Commit. Repeat.
-	        - Small bites — few lines per change.
-	        - Update each plan step as you go (plan update, status:"completed").
-	        - SMALL EDIT → xcode(build) → if build succeeds, git(commit) → repeat. Tiny commits, one file at a time. NO batching across files. NO skipping the commit.
-	        - ONLY what was asked. No refactoring, comments, or "improvements" beyond scope.
-	        - Build fails → read error, fix that line. Don't start over.
-	        - Approach fails → diagnose before switching. No blind retries, no abandon-after-one.
-	        - Don't re-read files in context. No reads without edits.
-	        - edit=single-line. diff_apply=multi-line. One edit per call. Build after every edit.
+        CODING DISCIPLINE:
+        - Plans encouraged for multi-file refactors, never required. Use plan(create) at the START of complex tasks; skip for one-line fixes.
+        - 1 file, 1 change at a time. Build. Commit. Repeat.
+        - Small bites — few lines per change.
+        - Update each plan step as you go (plan update, status:"completed").
+        - SMALL EDIT → xcode(build) → if build succeeds, git(commit) → repeat. Tiny commits, one file at a time. NO batching across files. NO skipping the commit.
+        - ONLY what was asked. No refactoring, comments, or "improvements" beyond scope.
+        - Build fails → read error, fix that line. Don't start over.
+        - Approach fails → diagnose before switching. No blind retries, no abandon-after-one.
+        - Don't re-read files in context. No reads without edits.
+        - edit=single-line. diff_apply=multi-line. One edit per call. Build after every edit.
         - Stuck after 3 attempts → done + explain.
 
         THINK BEFORE CODING:
