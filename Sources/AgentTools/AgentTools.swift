@@ -890,8 +890,9 @@ public enum AgentTools {
             properties: [
                 "name": ["type": "string", "description": "Agent name (defaults to agent-N)"],
                 "prompt": ["type": "string", "description": "Complete self-contained task. The sub-agent sees ONLY this — no parent context, no prior messages. Include all file paths, constraints, and what to return."],
-                "tools": ["type": "string", "description": "all | comma-separated group names (Core,Code,User,Auto,Work,Root,Sub-agents). Narrow to keep the sub-agent focused."],
+                "tools": ["type": "string", "description": "all | comma-separated group names (Core,Code,User,Auto,Work,Root,Sub-agents). Narrow to keep the sub-agent focused. Read-only agents (tools: \"Core,Work\") get a higher concurrency cap than write-capable ones."],
                 "max_iterations": ["type": "integer", "description": "Max LLM turns (default 15)"],
+                "model": ["type": "string", "description": "Optional model id from the active provider's model list. Use a fast/cheap model for search-and-summarize agents; omit to inherit the parent's model."],
             ],
             required: ["prompt"]
         ),
