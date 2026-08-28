@@ -1060,6 +1060,21 @@ public enum AgentTools {
         }
     }
 
+    /// Sanitize an MCP tool's name, description, and JSON schema (shared by Claude + Ollama formats).
+    private static func sanitizedMCPTool(_ tool: MCPToolInfo) -> (name: String, description: String, schema: [String: Any]) {
+        let safeName = sanitizeToolName("mcp_\(tool.serverName)_\(tool.name)")
+        let safeDesc = sanitizeDescription("[MCP:\(tool.serverName)] \(tool.description)")
+        let rawSchema = (try? JSONSerialization.jsonObject(with: Data(tool.inputSchemaJSON.utf8))) as? [String: Any]
+        let schema = rawSchema.flatMap { sanitizeSchema($0) as? [String: Any] }
+        let validSchema: [String: Any]
+        if let s = schema, !s.isEmpty {
+            validSchema = s
+        } else {
+            validSchema = ["type": "object", "properties": [:] as [String: Any]]
+        }
+        return (safeName, safeDesc, validSchema)
+    }
+
     @MainActor public static func claudeFormat(isEnabled: (String) -> Bool, mcpTools: [MCPToolInfo] = [], compact: Bool = false) -> [[String: Any]] {
         var tools = (commonTools + webSearchTools + conversationTools)
             .filter { isEnabled($0.name) }
@@ -1069,16 +1084,7 @@ public enum AgentTools {
                            properties: props, required: tool.required)
             }
         for tool in mcpTools {
-            let safeName = sanitizeToolName("mcp_\(tool.serverName)_\(tool.name)")
-            let safeDesc = sanitizeDescription("[MCP:\(tool.serverName)] \(tool.description)")
-            let rawSchema = (try? JSONSerialization.jsonObject(with: Data(tool.inputSchemaJSON.utf8))) as? [String: Any]
-            let schema = rawSchema.map { sanitizeSchema($0) as? [String: Any] } ?? nil
-            let validSchema: [String: Any]
-            if let s = schema, !s.isEmpty {
-                validSchema = s
-            } else {
-                validSchema = ["type": "object", "properties": [:] as [String: Any]]
-            }
+            let (safeName, safeDesc, validSchema) = sanitizedMCPTool(tool)
             tools.append([
                 "name": safeName,
                 "description": safeDesc,
@@ -1198,16 +1204,7 @@ public enum AgentTools {
                            properties: props, required: tool.required)
             }
         for tool in mcpTools {
-            let safeName = sanitizeToolName("mcp_\(tool.serverName)_\(tool.name)")
-            let safeDesc = sanitizeDescription("[MCP:\(tool.serverName)] \(tool.description)")
-            let rawSchema = (try? JSONSerialization.jsonObject(with: Data(tool.inputSchemaJSON.utf8))) as? [String: Any]
-            let schema = rawSchema.map { sanitizeSchema($0) as? [String: Any] } ?? nil
-            let validSchema: [String: Any]
-            if let s = schema, !s.isEmpty {
-                validSchema = s
-            } else {
-                validSchema = ["type": "object", "properties": [:] as [String: Any]]
-            }
+            let (safeName, safeDesc, validSchema) = sanitizedMCPTool(tool)
             tools.append([
                 "type": "function",
                 "function": [
